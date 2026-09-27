@@ -111,9 +111,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger Coolify Deployment
+        if: ${{ vars.COOLIFY_DEPLOY_ENABLED == 'true' }}
         run: |
           curl -s -o /dev/null -w "%{http_code}" \
             -X POST "${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_WEBHOOK_TOKEN }}" \
-            | grep -q "^2" || echo "Coolify deployment triggered"
-        if: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK != '' }}
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_WEBHOOK_TOKEN }}"
