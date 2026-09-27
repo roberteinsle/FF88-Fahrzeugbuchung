@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Booking;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class BookingEventController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $start = $request->query('start')
+            ? Carbon::parse($request->query('start'))->utc()
+            : now()->startOfMonth();
+
+        $end = $request->query('end')
+            ? Carbon::parse($request->query('end'))->utc()
+            : now()->endOfMonth();
+
+        $vehicleIds = $request->query('vehicles', []);
+
+        $query = Booking::with(['vehicle', 'user'])
+            ->active()
+            ->where('starts_at', '<', $end)
+            ->where('ends_at', '>', $start);
+
+        if (! empty($vehicleIds)) {
+            $query->whereIn('vehicle_id', $vehicleIds);
+        }
+
+        $events = $query->get()->map(function (Booking $booking) {
+            return [
+                'id' => $booking->id,
+                'title' => $booking->vehicle->displayName() . ' – ' . $booking->purpose,
+                'start' => $booking->starts_at->toIso8601String(),
+                'end' => $booking->ends_at->toIso8601String(),
+                'color' => $booking->vehicle->color,
+                'extendedProps' => [
+                    'bookingId' => $booking->id,
+                    'vehicleId' => $booking->vehicle_id,
+                    'vehicleName' => $booking->vehicle->name,
+                    'vehicleShort' => $booking->vehicle->displayName(),
+                    'userName' => $booking->user->name,
+                    'purpose' => $booking->purpose,
+                    'destination' => $booking->destination,
+                ],
+            ];
+        });
+
+        return response()->json($events);
+    }
+}
