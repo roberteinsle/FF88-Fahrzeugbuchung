@@ -55,10 +55,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->authorizationMiddleware(
-                \App\Http\Middleware\EnsureUserIsAdmin::class,
-            );
+            ]);
     }
 
 }
