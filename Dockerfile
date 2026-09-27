@@ -2,8 +2,9 @@ FROM serversideup/php:8.4-fpm-nginx-alpine
 
 USER root
 
-# Install intl extension (required by Filament)
-RUN install-php-extensions intl
+# Install Node.js (LTS) and intl PHP extension
+RUN apk add --no-cache nodejs npm && \
+    install-php-extensions intl
 
 WORKDIR /var/www/html
 
