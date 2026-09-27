@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Route;
 // Root redirect
 Route::get('/', fn () => redirect()->route('calendar'));
 
+// Laravel auth middleware expects a route named 'login'
+Route::redirect('/login', '/auth/login')->name('login');
+
 // -----------------------------------------------------------------------
 // Auth routes (public)
 // -----------------------------------------------------------------------
