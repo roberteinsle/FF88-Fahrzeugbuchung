@@ -29,7 +29,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/profile', fn () => view('pages.profile'))->name('profile');
 
     // FullCalendar JSON events feed
-    Route::get('/bookings/events', BookingEventController::class)->name('bookings.events');
+    Route::get('/bookings/events', [BookingEventController::class, 'index'])->name('bookings.events');
 
     // Logout
     Route::post('/logout', [MagicLinkController::class, 'logout'])->name('logout');
