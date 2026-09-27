@@ -50,14 +50,14 @@
                         </button>
                         @endforeach
                     </div>
-                    @error('vehicleId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('vehicleId') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Availability notice --}}
                 @if(!$available && $conflict)
                 <div class="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
                     <p class="font-semibold">Fahrzeug bereits gebucht</p>
-                    <p class="mt-0.5 text-red-700">
+                    <p class="mt-0.5 text-fw-red">
                         Von {{ $conflict['userName'] }} ({{ $conflict['startsAt'] }} – {{ $conflict['endsAt'] }})
                         @if($conflict['purpose']) · {{ Str::limit($conflict['purpose'], 40) }} @endif
                     </p>
@@ -89,7 +89,7 @@
                             wire:model.live.debounce.500ms="startsAt"
                             class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
-                        @error('startsAt') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('startsAt') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="ends_at" class="block text-sm font-medium text-gray-700 mb-1">Bis *</label>
@@ -99,7 +99,7 @@
                             wire:model.live.debounce.500ms="endsAt"
                             class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
-                        @error('endsAt') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('endsAt') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -113,7 +113,7 @@
                         placeholder="z. B. Jugendfeuerwehr Übung"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    @error('purpose') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('purpose') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Ziel --}}
@@ -155,7 +155,7 @@
                         placeholder="Weitere Infos für Mitglieder …"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     ></textarea>
-                    @error('notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('notes') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Submit --}}

@@ -11,7 +11,7 @@
                 Falls diese E-Mail-Adresse bei uns registriert ist, haben wir dir einen Login-Link geschickt.
                 Der Link ist {{ config('magic-link.ttl_minutes') }} Minuten gültig.
             </p>
-            <a href="{{ route('auth.magic-link.form') }}" class="mt-6 inline-block text-sm text-red-700 hover:underline">
+            <a href="{{ route('auth.magic-link.form') }}" class="mt-6 inline-block text-sm text-fw-red hover:underline">
                 Zurück zur Anmeldung
             </a>
         </div>

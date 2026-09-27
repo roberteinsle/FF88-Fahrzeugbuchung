@@ -60,7 +60,7 @@
             @csrf
             <button
                 type="submit"
-                class="w-full py-2.5 px-4 rounded-xl border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                class="w-full py-2.5 px-4 rounded-xl border border-red-200 text-sm font-medium text-fw-red hover:bg-red-50 transition-colors"
             >
                 Abmelden
             </button>

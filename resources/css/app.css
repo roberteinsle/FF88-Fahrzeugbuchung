@@ -9,6 +9,14 @@
 @theme {
     --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* FF Braak Brand Colors */
+    --color-fw-red:      #ED2F12;
+    --color-fw-red-dark: #9B0103;
+    --color-fw-navy:     #1B2645;
+    --color-fw-green:    #4CA662;
+    --color-fw-orange:   #F66123;
+    --color-fw-grey:     #4A4A4A;
 }
 
 /* FullCalendar mobile tweaks */

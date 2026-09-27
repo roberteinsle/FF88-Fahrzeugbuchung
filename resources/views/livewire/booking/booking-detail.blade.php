@@ -117,7 +117,7 @@
                     @if($confirmCancel)
                     <button
                         wire:click="cancel"
-                        class="flex-1 py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-medium text-white transition-colors"
+                        class="flex-1 py-2 px-4 rounded-xl bg-fw-red hover:bg-fw-red text-sm font-medium text-white transition-colors"
                     >
                         <span wire:loading.remove wire:target="cancel">Wirklich stornieren?</span>
                         <span wire:loading wire:target="cancel">Wird storniert …</span>
@@ -125,7 +125,7 @@
                     @else
                     <button
                         wire:click="$set('confirmCancel', true)"
-                        class="flex-1 py-2 px-4 rounded-xl border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        class="flex-1 py-2 px-4 rounded-xl border border-red-200 text-sm font-medium text-fw-red hover:bg-red-50 transition-colors"
                     >
                         Stornieren
                     </button>

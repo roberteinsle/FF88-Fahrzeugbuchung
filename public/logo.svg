@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <!-- Shield background -->
+  <path d="M100 8 L172 30 L172 95 Q172 135 100 155 Q28 135 28 95 L28 30 Z" fill="white" stroke="#4A4A4A" stroke-width="2"/>
+
+  <!-- Axes left -->
+  <g transform="translate(42,40) rotate(-30,20,30)">
+    <rect x="18" y="8" width="4" height="44" fill="#4A4A4A" rx="1"/>
+    <path d="M6 8 Q20 2 22 12 L22 24 Q20 26 6 20 Z" fill="#4A4A4A"/>
+  </g>
+  <!-- Axes right -->
+  <g transform="translate(158,40) rotate(30,20,30) scale(-1,1) translate(-40,0)">
+    <rect x="18" y="8" width="4" height="44" fill="#4A4A4A" rx="1"/>
+    <path d="M6 8 Q20 2 22 12 L22 24 Q20 26 6 20 Z" fill="#4A4A4A"/>
+  </g>
+
+  <!-- Green circle -->
+  <circle cx="100" cy="78" r="32" fill="#4CA662"/>
+  <circle cx="100" cy="78" r="28" fill="#ED2F12" opacity="0.15"/>
+  <circle cx="100" cy="78" r="28" fill="none" stroke="#ED2F12" stroke-width="2"/>
+
+  <!-- Fleur de lis simplified -->
+  <g fill="#ED2F12" transform="translate(100,78)">
+    <!-- center stem -->
+    <rect x="-3" y="-14" width="6" height="26" rx="2"/>
+    <!-- left petal -->
+    <path d="M-3,-4 Q-16,-8 -14,4 Q-10,10 -3,6 Z"/>
+    <!-- right petal -->
+    <path d="M3,-4 Q16,-8 14,4 Q10,10 3,6 Z"/>
+    <!-- top crown -->
+    <ellipse cx="0" cy="-14" rx="4" ry="5"/>
+    <ellipse cx="-7" cy="-10" rx="3" ry="4"/>
+    <ellipse cx="7" cy="-10" rx="3" ry="4"/>
+  </g>
+
+  <!-- Top banner: BRAAK -->
+  <path d="M62 38 Q100 28 138 38" stroke="#ED2F12" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <text x="100" y="41" text-anchor="middle" font-family="serif" font-size="9" font-weight="bold" fill="white" letter-spacing="1">BRAAK</text>
+
+  <!-- Bottom banner: FEUERWEHR -->
+  <path d="M58 118 Q100 128 142 118" stroke="#ED2F12" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <text x="100" y="122" text-anchor="middle" font-family="serif" font-size="7.5" font-weight="bold" fill="white" letter-spacing="0.5">FEUERWEHR</text>
+
+  <!-- Year ribbons -->
+  <path d="M55 130 Q45 138 55 145 L95 142 L100 148 L105 142 L145 145 Q155 138 145 130 L105 133 L100 127 L95 133 Z" fill="#4A4A4A"/>
+  <text x="68" y="141" text-anchor="middle" font-family="serif" font-size="7" fill="white">seit</text>
+  <text x="100" y="141" text-anchor="middle" font-family="serif" font-size="9" font-weight="bold" fill="white">88</text>
+  <text x="132" y="141" text-anchor="middle" font-family="serif" font-size="7" fill="white">1890</text>
+
+  <!-- Ladder left -->
+  <g transform="translate(30,58)" stroke="#4A4A4A" stroke-width="1.5">
+    <line x1="0" y1="0" x2="0" y2="28"/>
+    <line x1="6" y1="0" x2="6" y2="28"/>
+    <line x1="0" y1="7" x2="6" y2="7"/>
+    <line x1="0" y1="14" x2="6" y2="14"/>
+    <line x1="0" y1="21" x2="6" y2="21"/>
+  </g>
+  <!-- Flame right -->
+  <g transform="translate(162,58)" fill="#F66123">
+    <path d="M4 20 Q-2 12 4 6 Q3 14 8 10 Q6 16 10 20 Q8 14 12 18 Q14 10 10 2 Q18 8 16 20 Q20 14 18 20 Q22 26 12 28 Q2 26 4 20 Z"/>
+  </g>
+</svg>

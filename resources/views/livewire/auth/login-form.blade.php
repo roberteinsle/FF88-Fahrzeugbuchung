@@ -24,16 +24,16 @@
                     autocomplete="email"
                     autofocus
                     placeholder="deine@email.de"
-                    class="w-full px-3 py-3 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent @error('email') border-red-500 @enderror"
+                    class="w-full px-3 py-3 border border-gray-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-fw-red focus:border-transparent @error('email') border-fw-red @enderror"
                 >
                 @error('email')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    <p class="mt-1 text-sm text-fw-red">{{ $message }}</p>
                 @enderror
             </div>
 
             <button
                 type="submit"
-                class="w-full bg-red-700 text-white font-semibold py-3 px-4 rounded-xl hover:bg-red-800 transition-colors"
+                class="w-full bg-fw-red text-white font-semibold py-3 px-4 rounded-xl hover:bg-fw-red-dark transition-colors"
                 wire:loading.attr="disabled"
                 wire:loading.class="opacity-75"
             >
