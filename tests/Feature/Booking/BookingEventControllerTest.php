@@ -29,7 +29,7 @@ test('events endpoint returns JSON for active bookings', function () {
         'end' => '2026-10-31T23:59:59',
         'vehicles' => [$this->vehicle->id],
     ]))->assertOk()
-        ->assertJsonFragment(['title' => 'Test Event']);
+        ->assertJsonFragment(['purpose' => 'Test Event']);
 });
 
 test('cancelled bookings are not in the events feed', function () {
@@ -45,13 +45,11 @@ test('cancelled bookings are not in the events feed', function () {
 
     $this->service->cancel($booking);
 
-    $response = $this->getJson(route('bookings.events', [
+    $this->getJson(route('bookings.events', [
         'start' => '2026-10-01T00:00:00',
         'end' => '2026-10-31T23:59:59',
-    ]));
-
-    $response->assertOk()
-        ->assertJsonMissing(['title' => 'Storniert']);
+    ]))->assertOk()
+        ->assertJsonMissing(['purpose' => 'Storniert']);
 });
 
 test('vehicle filter limits results', function () {
@@ -82,12 +80,13 @@ test('vehicle filter limits results', function () {
         'end' => '2026-10-31T23:59:59',
         'vehicles' => [$this->vehicle->id],
     ]))->assertOk()
-        ->assertJsonFragment(['title' => 'Vehicle A'])
-        ->assertJsonMissing(['title' => 'Vehicle B']);
+        ->assertJsonFragment(['purpose' => 'Vehicle A'])
+        ->assertJsonMissing(['purpose' => 'Vehicle B']);
 });
 
 test('unauthenticated user cannot access events endpoint', function () {
     auth()->logout();
+    // getJson sends Accept: application/json → Laravel returns 401, not redirect
     $this->getJson(route('bookings.events'))
-        ->assertRedirect();
+        ->assertUnauthorized();
 });

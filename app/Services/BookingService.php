@@ -41,6 +41,12 @@ class BookingService
 
     public function create(array $data, int $userId): Booking
     {
+        if ($data['starts_at'] >= $data['ends_at']) {
+            throw ValidationException::withMessages([
+                'ends_at' => ['Die Endzeit muss nach der Startzeit liegen.'],
+            ]);
+        }
+
         try {
             return Booking::create([
                 'vehicle_id' => $data['vehicle_id'],

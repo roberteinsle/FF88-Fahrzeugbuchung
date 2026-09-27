@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 beforeEach(function () {
     RateLimiter::clear('magic-link:ip:127.0.0.1');
+    RateLimiter::clear('magic-link:ip:');
 });
 
 test('magic link form is accessible', function () {
@@ -122,7 +123,7 @@ test('inactive user cannot log in', function () {
 
 test('rate limit blocks excessive requests per email', function () {
     $user = User::factory()->create();
-    $key = 'magic-link:email:' . sha1($user->email);
+    $key = 'magic-link:email:' . hash('sha256', strtolower($user->email));
 
     // Exhaust the limit
     RateLimiter::hit($key, 3600);
