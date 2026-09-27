@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="h-full bg-gray-50">
+<html lang="de" class="h-full bg-fw-grey-bg">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,20 +11,20 @@
 <body class="h-full">
     <div class="min-h-full flex flex-col">
         {{-- Top Header (only on desktop) --}}
-        <header class="hidden sm:block bg-fw-red text-white shadow-sm">
+        <header class="hidden sm:block bg-fw-navy text-white shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-14">
                     <div class="flex items-center gap-3">
-                        <img src="{{ asset('logo.svg') }}" alt="FF Braak" class="h-8 w-auto">
+                        <img src="{{ asset('images/ff-braak-logo.webp') }}" alt="FF Braak" class="h-8 w-auto brightness-0 invert">
                         <span class="font-semibold text-sm">FF Braak Fahrzeugbuchung</span>
                     </div>
                     @auth
                     <nav class="flex items-center gap-6 text-sm">
-                        <a href="{{ route('calendar') }}" class="hover:text-red-100 {{ request()->routeIs('calendar') ? 'font-semibold' : '' }}">Kalender</a>
-                        <a href="{{ route('my-bookings') }}" class="hover:text-red-100 {{ request()->routeIs('my-bookings') ? 'font-semibold' : '' }}">Meine Buchungen</a>
-                        <a href="{{ route('profile') }}" class="hover:text-red-100 {{ request()->routeIs('profile') ? 'font-semibold' : '' }}">Profil</a>
+                        <a href="{{ route('calendar') }}" class="hover:text-fw-grey-light {{ request()->routeIs('calendar') ? 'font-semibold' : '' }}">Kalender</a>
+                        <a href="{{ route('my-bookings') }}" class="hover:text-fw-grey-light {{ request()->routeIs('my-bookings') ? 'font-semibold' : '' }}">Meine Buchungen</a>
+                        <a href="{{ route('profile') }}" class="hover:text-fw-grey-light {{ request()->routeIs('profile') ? 'font-semibold' : '' }}">Profil</a>
                         @if(auth()->user()->is_admin)
-                        <a href="{{ route('filament.admin.pages.dashboard') }}" class="hover:text-red-100">Admin</a>
+                        <a href="{{ route('filament.admin.pages.dashboard') }}" class="hover:text-fw-grey-light">Admin</a>
                         @endif
                     </nav>
                     @endauth
