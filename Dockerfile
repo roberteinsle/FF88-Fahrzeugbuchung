@@ -1,5 +1,7 @@
 FROM serversideup/php:8.4-fpm-nginx-alpine
 
+USER root
+
 # Install intl extension (required by Filament)
 RUN install-php-extensions intl
 
@@ -21,3 +23,5 @@ RUN npm ci --silent && npm run build && rm -rf node_modules
 
 # Ensure writable directories are owned by web user
 RUN chown -R www-data:www-data storage bootstrap/cache
+
+USER www-data
