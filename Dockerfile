@@ -1,4 +1,4 @@
-FROM serversideup/php:8.3-fpm-nginx-alpine
+FROM serversideup/php:8.4-fpm-nginx-alpine
 
 # Install intl extension (required by Filament)
 RUN install-php-extensions intl
