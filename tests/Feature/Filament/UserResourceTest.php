@@ -17,7 +17,7 @@ test('non-admin is redirected from admin panel', function () {
     $this->actingAs($user);
 
     $this->get('/admin')
-        ->assertRedirect();
+        ->assertForbidden();
 });
 
 test('last admin cannot have admin revoked', function () {

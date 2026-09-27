@@ -41,12 +41,7 @@ test('GET confirm route does not consume token', function () {
     $this->get(route('auth.magic-link.confirm', $rawToken))
         ->assertOk();
 
-    // Token must NOT be consumed
-    $this->assertDatabaseMissing('login_tokens', [
-        'token_hash' => hash('sha256', $rawToken),
-        'used_at' => null,
-    ]);
-    // Actually assert it is still null
+    // Token must NOT be consumed — used_at stays null
     $this->assertDatabaseHas('login_tokens', [
         'token_hash' => hash('sha256', $rawToken),
         'used_at' => null,
