@@ -33,7 +33,6 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Red,
             ])
             ->brandName('FF Braak Admin')
-            ->locale('de')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -56,14 +55,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->authorizationMiddleware(
+                \App\Http\Middleware\EnsureUserIsAdmin::class,
+            );
     }
 
-    public function register(): void
-    {
-        parent::register();
-
-        // Only allow users with is_admin=true to access the panel
-        \Filament\Facades\Filament::auth()->check();
-    }
 }
