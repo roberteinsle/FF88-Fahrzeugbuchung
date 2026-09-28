@@ -72,8 +72,6 @@ class BookingService
     {
         try {
             $booking->update($data);
-
-            return $booking->fresh();
         } catch (QueryException $e) {
             if ($this->isExclusionViolation($e)) {
                 throw ValidationException::withMessages([
@@ -82,6 +80,10 @@ class BookingService
             }
             throw $e;
         }
+
+        app(DecisionService::class)->releaseSlotsFreedBy($booking);
+
+        return $booking->fresh();
     }
 
     public function cancel(Booking $booking): void
@@ -90,7 +92,11 @@ class BookingService
 
         if ($booking->isPending() && $booking->decision) {
             app(DecisionService::class)->withdraw($booking->decision);
+
+            return;
         }
+
+        app(DecisionService::class)->releaseSlotsFreedBy($booking);
     }
 
     private function findAlternatives(int $excludeVehicleId, Carbon $startsAt, Carbon $endsAt): Collection

@@ -23,15 +23,33 @@ class DecisionDetail extends Component
         $this->decide($service, false);
     }
 
+    /** Flip an existing decision */
+    public function change(DecisionService $service): void
+    {
+        $this->run(fn () => $service->change($this->decision, auth()->user(), $this->note));
+    }
+
+    /** Take the decision back; the request is open again */
+    public function reopen(DecisionService $service): void
+    {
+        $this->run(fn () => $service->reopen($this->decision, auth()->user(), $this->note));
+    }
+
     private function decide(DecisionService $service, bool $approve): void
+    {
+        $this->run(fn () => $service->decide($this->decision, auth()->user(), $approve, $this->note));
+    }
+
+    private function run(callable $action): void
     {
         $this->authorize('decide-bookings');
         $this->validate(['note' => ['nullable', 'string', 'max:2000']]);
 
         try {
-            $service->decide($this->decision, auth()->user(), $approve, $this->note);
+            $action();
+            $this->note = '';
         } catch (ValidationException $e) {
-            $this->addError('decision', $e->errors()['decision'][0] ?? 'Entscheidung nicht möglich.');
+            $this->addError('decision', $e->errors()['decision'][0] ?? 'Aktion nicht möglich.');
         }
 
         $this->decision->refresh();

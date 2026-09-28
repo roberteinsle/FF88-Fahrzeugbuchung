@@ -6,8 +6,10 @@ use App\Models\Booking;
 use App\Models\BookingDecision;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Notifications\BookingReactivatedNotification;
 use App\Notifications\DecisionClosedNotification;
 use App\Notifications\DecisionMadeNotification;
+use App\Notifications\DecisionReopenedNotification;
 use App\Notifications\DecisionRequestedNotification;
 use App\Services\BookingService;
 use App\Services\DecisionService;
@@ -246,4 +248,128 @@ test('rejecting a change request keeps the original booking', function () {
     expect($mine->fresh()->isCancelled())->toBeFalse()
         ->and($this->existing->fresh()->isCancelled())->toBeFalse()
         ->and($decision->booking->fresh()->status)->toBe(Booking::STATUS_REJECTED);
+});
+
+test('an approved decision can be changed to keep the existing booking', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: true);
+
+    Livewire::actingAs($this->deciderB)
+        ->test(DecisionDetail::class, ['decision' => $decision->fresh()])
+        ->set('note', 'Doch lieber der Ausflug')
+        ->call('change')
+        ->assertHasNoErrors();
+
+    $decision->refresh();
+    expect($decision->status)->toBe(BookingDecision::STATUS_REJECTED)
+        ->and($decision->decided_by)->toBe($this->deciderB->id)
+        ->and($decision->booking->status)->toBe(Booking::STATUS_REJECTED)
+        ->and($this->existing->fresh()->isCancelled())->toBeFalse()
+        ->and(collect($decision->history)->pluck('action')->all())->toBe(['requested', 'approved', 'changed_rejected']);
+
+    Notification::assertSentTo([$this->requester, $this->owner], DecisionMadeNotification::class,
+        fn ($n, $c, $notifiable) => str_starts_with($n->toMail($notifiable)->subject, 'Entscheidung geändert'));
+});
+
+test('a rejected decision can be changed to approve the request', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: false);
+
+    app(DecisionService::class)->change($decision, $this->deciderA);
+
+    expect($decision->fresh()->status)->toBe(BookingDecision::STATUS_APPROVED)
+        ->and($decision->booking->fresh()->status)->toBe(Booking::STATUS_CONFIRMED)
+        ->and($this->existing->fresh()->isCancelled())->toBeTrue();
+});
+
+test('reopening restores the state before the decision and informs everyone', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: true);
+
+    Livewire::actingAs($this->deciderA)
+        ->test(DecisionDetail::class, ['decision' => $decision->fresh()])
+        ->call('reopen')
+        ->assertHasNoErrors();
+
+    $decision->refresh();
+    expect($decision->status)->toBe(BookingDecision::STATUS_PENDING)
+        ->and($decision->decided_by)->toBeNull()
+        ->and($decision->booking->status)->toBe(Booking::STATUS_PENDING)
+        ->and($this->existing->fresh()->isCancelled())->toBeFalse();
+
+    Notification::assertSentTo(
+        [$this->requester, $this->owner, $this->deciderA, $this->deciderB],
+        DecisionReopenedNotification::class
+    );
+
+    $this->actingAs($this->deciderB)->get(route('calendar'))->assertSee('Entscheidung (1)');
+});
+
+test('reversal fails with a message when the freed slot was booked in the meantime', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: true);
+
+    // Request shrinks, someone else books the freed morning
+    $decision->booking->update(['starts_at' => Carbon::parse('2026-10-10 13:00', 'Europe/Berlin')->utc()]);
+    Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'starts_at' => Carbon::parse('2026-10-10 10:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-10 12:00', 'Europe/Berlin')->utc(),
+    ]);
+
+    Livewire::actingAs($this->deciderA)
+        ->test(DecisionDetail::class, ['decision' => $decision->fresh()])
+        ->call('reopen')
+        ->assertHasErrors('decision');
+
+    expect($decision->fresh()->status)->toBe(BookingDecision::STATUS_APPROVED)
+        ->and($this->existing->fresh()->isCancelled())->toBeTrue();
+});
+
+test('cancelling an approved request reactivates the booking that lost', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: true);
+    Notification::fake();
+
+    app(BookingService::class)->cancel($decision->booking->fresh());
+
+    expect($this->existing->fresh()->isCancelled())->toBeFalse()
+        ->and(collect($decision->fresh()->history)->last()['action'])->toBe('reactivated');
+    Notification::assertSentTo(
+        [$this->owner, $this->requester, $this->deciderA, $this->deciderB],
+        BookingReactivatedNotification::class
+    );
+});
+
+test('moving an approved request away reactivates the booking that lost', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: true);
+
+    app(BookingService::class)->update($decision->booking->fresh(), [
+        'starts_at' => Carbon::parse('2026-10-11 12:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-11 16:00', 'Europe/Berlin')->utc(),
+    ]);
+
+    expect($this->existing->fresh()->isCancelled())->toBeFalse();
+});
+
+test('a change that still overlaps does not reactivate anything', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: true);
+    Notification::fake();
+
+    app(BookingService::class)->update($decision->booking->fresh(), ['purpose' => 'Nur Text geändert']);
+
+    expect($this->existing->fresh()->isCancelled())->toBeTrue();
+    Notification::assertNothingSent();
+});
+
+test('cancelling the kept booking confirms the rejected request', function () {
+    $decision = requestConflict();
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: false);
+
+    app(BookingService::class)->cancel($this->existing->fresh());
+
+    expect($decision->booking->fresh()->status)->toBe(Booking::STATUS_CONFIRMED);
+    Notification::assertSentTo($this->requester, BookingReactivatedNotification::class);
 });

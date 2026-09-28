@@ -29,6 +29,7 @@ class BookingDecision extends Model
         'decided_by',
         'decided_at',
         'decision_note',
+        'history',
     ];
 
     protected function casts(): array
@@ -36,6 +37,7 @@ class BookingDecision extends Model
         return [
             'conflicting_booking_ids' => 'array',
             'notified_user_ids' => 'array',
+            'history' => 'array',
             'decided_at' => 'datetime',
         ];
     }
@@ -64,6 +66,33 @@ class BookingDecision extends Model
             ->whereIn('id', $this->conflicting_booking_ids ?? [])
             ->orderBy('starts_at')
             ->get();
+    }
+
+    public const HISTORY_LABELS = [
+        'requested' => 'Anfrage gestellt',
+        'approved' => 'Anfrage genehmigt',
+        'rejected' => 'Bestehende Buchung behalten',
+        'changed_approved' => 'Entscheidung geändert: Anfrage genehmigt',
+        'changed_rejected' => 'Entscheidung geändert: bestehende Buchung behalten',
+        'reopened' => 'Entscheidung zurückgenommen – wieder offen',
+        'withdrawn' => 'Anfrage zurückgezogen',
+        'reactivated' => 'Buchung automatisch wieder aktiviert',
+    ];
+
+    public function addHistory(string $action, ?User $by = null, ?string $note = null): void
+    {
+        $this->history = [...($this->history ?? []), [
+            'at' => now()->toIso8601String(),
+            'by' => $by?->id,
+            'by_name' => $by?->name,
+            'action' => $action,
+            'note' => $note,
+        ]];
+    }
+
+    public function isDecided(): bool
+    {
+        return in_array($this->status, [self::STATUS_APPROVED, self::STATUS_REJECTED], true);
     }
 
     public function isPending(): bool

@@ -11,7 +11,10 @@ use Illuminate\Notifications\Notification;
  */
 class DecisionClosedNotification extends Notification
 {
-    public function __construct(private readonly BookingDecision $decision) {}
+    public function __construct(
+        private readonly BookingDecision $decision,
+        private readonly bool $changed = false,
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -24,11 +27,13 @@ class DecisionClosedNotification extends Notification
         $withdrawn = $this->decision->status === BookingDecision::STATUS_WITHDRAWN;
 
         $mail = (new MailMessage)
-            ->subject('Erledigt: '.$request->vehicle->name.' am '.BookingSummary::day($request))
+            ->subject(($this->changed ? 'Entscheidung geändert: ' : 'Erledigt: ').$request->vehicle->name.' am '.BookingSummary::day($request))
             ->greeting('Hallo '.$notifiable->name.',')
             ->line($withdrawn
                 ? 'die Anfrage, zu der du um eine Entscheidung gebeten wurdest, wurde von '.$request->user->name.' **zurückgezogen**. Es ist nichts mehr zu tun.'
-                : 'die Entscheidung, um die du gebeten wurdest, wurde bereits von **'.$this->decision->decider?->name.'** getroffen. Es ist nichts mehr zu tun.')
+                : ($this->changed
+                    ? 'die Entscheidung, um die du gebeten wurdest, wurde von **'.$this->decision->decider?->name.'** geändert.'
+                    : 'die Entscheidung, um die du gebeten wurdest, wurde bereits von **'.$this->decision->decider?->name.'** getroffen. Es ist nichts mehr zu tun.'))
             ->line('**Anfrage:** '.BookingSummary::line($request));
 
         if (! $withdrawn) {

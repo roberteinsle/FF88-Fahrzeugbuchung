@@ -11,7 +11,11 @@ use Illuminate\Notifications\Notification;
  */
 class DecisionMadeNotification extends Notification
 {
-    public function __construct(private readonly BookingDecision $decision) {}
+    /** @param bool $changed an earlier decision was reversed */
+    public function __construct(
+        private readonly BookingDecision $decision,
+        private readonly bool $changed = false,
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -25,8 +29,12 @@ class DecisionMadeNotification extends Notification
         $isRequester = $request->user_id === $notifiable->id;
 
         $mail = (new MailMessage)
-            ->subject('Entscheidung zu '.$request->vehicle->name.' am '.BookingSummary::day($request))
+            ->subject(($this->changed ? 'Entscheidung geändert: ' : 'Entscheidung zu ').$request->vehicle->name.' am '.BookingSummary::day($request))
             ->greeting('Hallo '.$notifiable->name.',');
+
+        if ($this->changed) {
+            $mail->line('eine bereits getroffene Entscheidung wurde **geändert**. Es gilt ab sofort:');
+        }
 
         if ($isRequester && $this->decision->replacedBooking) {
             $mail->line($approved

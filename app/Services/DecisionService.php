@@ -5,9 +5,12 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\BookingDecision;
 use App\Models\User;
+use App\Notifications\BookingReactivatedNotification;
 use App\Notifications\DecisionClosedNotification;
 use App\Notifications\DecisionMadeNotification;
+use App\Notifications\DecisionReopenedNotification;
 use App\Notifications\DecisionRequestedNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -46,13 +49,17 @@ class DecisionService
                 'status' => Booking::STATUS_PENDING,
             ]);
 
-            return BookingDecision::create([
+            $decision = new BookingDecision([
                 'booking_id' => $booking->id,
                 'replaces_booking_id' => $replaces?->id,
                 'conflicting_booking_ids' => $conflicts->pluck('id')->all(),
                 'reason' => $reason,
                 'notified_user_ids' => $this->deciders()->pluck('id')->all(),
             ]);
+            $decision->addHistory('requested', $requester, $reason);
+            $decision->save();
+
+            return $decision;
         });
 
         $this->notify(User::whereIn('id', $decision->notified_user_ids)->get(), new DecisionRequestedNotification($decision));
@@ -67,7 +74,7 @@ class DecisionService
     public function decide(BookingDecision $decision, User $decider, bool $approve, ?string $note = null): BookingDecision
     {
         DB::transaction(function () use ($decision, $decider, $approve, $note) {
-            $locked = BookingDecision::whereKey($decision->id)->lockForUpdate()->first();
+            $locked = $this->lock($decision);
 
             if (! $locked->isPending()) {
                 throw ValidationException::withMessages([
@@ -75,40 +82,61 @@ class DecisionService
                 ]);
             }
 
-            $request = $locked->booking;
-
-            if ($approve) {
-                // Re-check: bookings may have been added or cancelled since the request
-                $conflicts = $this->conflictsFor($request->vehicle_id, $request->starts_at, $request->ends_at, $locked->replaces_booking_id);
-                $conflicts->each->update(['cancelled_at' => now()]);
-                if ($locked->replacedBooking && ! $locked->replacedBooking->isCancelled()) {
-                    $locked->replacedBooking->update(['cancelled_at' => now()]);
-                }
-                $request->update(['status' => Booking::STATUS_CONFIRMED]);
-                $locked->conflicting_booking_ids = $conflicts->pluck('id')->all();
-            } else {
-                $request->update(['status' => Booking::STATUS_REJECTED]);
-            }
-
-            $locked->fill([
-                'status' => $approve ? BookingDecision::STATUS_APPROVED : BookingDecision::STATUS_REJECTED,
-                'decided_by' => $decider->id,
-                'decided_at' => now(),
-                'decision_note' => $note ?: null,
-            ])->save();
+            $this->applyOutcome($locked, $approve);
+            $this->markDecided($locked, $decider, $approve, $note);
+            $locked->addHistory($approve ? 'approved' : 'rejected', $decider, $note);
+            $locked->save();
         });
 
         $decision->refresh();
+        $this->releaseReplacedBooking($decision);
+        $this->notifyOutcome($decision, $decider, changed: false);
 
-        $affected = $decision->conflictingBookings()->pluck('user')
-            ->push($decision->booking->user)
-            ->unique('id');
-        $this->notify($affected, new DecisionMadeNotification($decision));
+        return $decision;
+    }
 
-        $otherDeciders = User::whereIn('id', $decision->notified_user_ids ?? [])
-            ->where('id', '!=', $decider->id)
-            ->get();
-        $this->notify($otherDeciders, new DecisionClosedNotification($decision));
+    /** Flip a decided outcome (approved <-> rejected) */
+    public function change(BookingDecision $decision, User $decider, ?string $note = null): BookingDecision
+    {
+        DB::transaction(function () use ($decision, $decider, $note) {
+            $locked = $this->lock($decision);
+            $this->ensureCanRevise($locked);
+
+            $approve = $locked->status === BookingDecision::STATUS_REJECTED;
+            $this->revertOutcome($locked);
+            $this->applyOutcome($locked, $approve);
+            $this->markDecided($locked, $decider, $approve, $note);
+            $locked->addHistory($approve ? 'changed_approved' : 'changed_rejected', $decider, $note);
+            $locked->save();
+        });
+
+        $decision->refresh();
+        $this->releaseReplacedBooking($decision);
+        $this->notifyOutcome($decision, $decider, changed: true);
+
+        return $decision;
+    }
+
+    /** Undo the decision: everything goes back to how it was while the request was open */
+    public function reopen(BookingDecision $decision, User $decider, ?string $note = null): BookingDecision
+    {
+        DB::transaction(function () use ($decision, $decider, $note) {
+            $locked = $this->lock($decision);
+            $this->ensureCanRevise($locked);
+
+            $this->revertOutcome($locked);
+            $locked->fill([
+                'status' => BookingDecision::STATUS_PENDING,
+                'decided_by' => null,
+                'decided_at' => null,
+                'decision_note' => null,
+            ]);
+            $locked->addHistory('reopened', $decider, $note);
+            $locked->save();
+        });
+
+        $decision->refresh();
+        $this->notify($this->involvedUsers($decision), new DecisionReopenedNotification($decision, $decider, $note));
 
         return $decision;
     }
@@ -120,12 +148,49 @@ class DecisionService
             return;
         }
 
-        $decision->update(['status' => BookingDecision::STATUS_WITHDRAWN, 'decided_at' => now()]);
+        $decision->status = BookingDecision::STATUS_WITHDRAWN;
+        $decision->decided_at = now();
+        $decision->addHistory('withdrawn', $decision->booking->user);
+        $decision->save();
 
         $this->notify(
             User::whereIn('id', $decision->notified_user_ids ?? [])->get(),
             new DecisionClosedNotification($decision)
         );
+    }
+
+    /**
+     * A booking that won a decision was cancelled or changed: give the slot back
+     * to the booking that lost, as long as it is still ahead and nothing else took the slot.
+     *
+     * Approved decisions: the request won, the cancelled conflicts lost.
+     * Rejected decisions: the conflicts won, the rejected request lost.
+     */
+    public function releaseSlotsFreedBy(Booking $winner): void
+    {
+        $winner->refresh();
+
+        $asRequest = BookingDecision::where('booking_id', $winner->id)
+            ->where('status', BookingDecision::STATUS_APPROVED)
+            ->get();
+        $asExisting = BookingDecision::whereJsonContains('conflicting_booking_ids', $winner->id)
+            ->where('status', BookingDecision::STATUS_REJECTED)
+            ->get();
+
+        foreach ($asRequest as $decision) {
+            foreach ($decision->conflictingBookings() as $loser) {
+                if ($loser->isCancelled()) {
+                    $this->reactivate($decision, $loser, $winner, fn () => $loser->update(['cancelled_at' => null]));
+                }
+            }
+        }
+
+        foreach ($asExisting as $decision) {
+            $loser = $decision->booking;
+            if ($loser->isRejected() && ! $loser->isCancelled()) {
+                $this->reactivate($decision, $loser, $winner, fn () => $loser->update(['status' => Booking::STATUS_CONFIRMED]));
+            }
+        }
     }
 
     /** Active deciders; falls back to admins so a request never goes unanswered */
@@ -134,6 +199,163 @@ class DecisionService
         $deciders = User::active()->where('is_decider', true)->get();
 
         return $deciders->isNotEmpty() ? $deciders : User::active()->where('is_admin', true)->get();
+    }
+
+    private function applyOutcome(BookingDecision $decision, bool $approve): void
+    {
+        $request = $decision->booking;
+
+        if (! $approve) {
+            $request->update(['status' => Booking::STATUS_REJECTED]);
+
+            return;
+        }
+
+        // Re-check: bookings may have been added or cancelled since the request
+        $conflicts = $this->conflictsFor($request->vehicle_id, $request->starts_at, $request->ends_at, $decision->replaces_booking_id);
+        $conflicts->each->update(['cancelled_at' => now()]);
+
+        $replaced = $decision->replacedBooking;
+        if ($replaced && ! $replaced->isCancelled()) {
+            $replaced->update(['cancelled_at' => now()]);
+        }
+
+        $this->restore(fn () => $request->update(['status' => Booking::STATUS_CONFIRMED]), $request);
+
+        // Record what this decision actually cancelled, so it can be undone precisely
+        $decision->conflicting_booking_ids = $conflicts->pluck('id')->all();
+    }
+
+    private function revertOutcome(BookingDecision $decision): void
+    {
+        $request = $decision->booking;
+        $wasApproved = $decision->status === BookingDecision::STATUS_APPROVED;
+
+        // The request stops blocking first, so the old bookings can take their slot back
+        $request->update(['status' => Booking::STATUS_PENDING]);
+
+        if (! $wasApproved) {
+            return;
+        }
+
+        foreach ($decision->conflictingBookings() as $booking) {
+            if ($booking->isCancelled()) {
+                $this->restore(fn () => $booking->update(['cancelled_at' => null]), $booking);
+            }
+        }
+
+        $replaced = $decision->replacedBooking;
+        if ($replaced && $replaced->isCancelled()) {
+            $this->restore(fn () => $replaced->update(['cancelled_at' => null]), $replaced);
+        }
+    }
+
+    private function markDecided(BookingDecision $decision, User $decider, bool $approve, ?string $note): void
+    {
+        $decision->fill([
+            'status' => $approve ? BookingDecision::STATUS_APPROVED : BookingDecision::STATUS_REJECTED,
+            'decided_by' => $decider->id,
+            'decided_at' => now(),
+            'decision_note' => $note ?: null,
+        ]);
+    }
+
+    private function ensureCanRevise(BookingDecision $decision): void
+    {
+        if (! $decision->isDecided()) {
+            throw ValidationException::withMessages([
+                'decision' => ['Diese Entscheidung kann nicht mehr geändert werden.'],
+            ]);
+        }
+
+        if ($decision->booking->isCancelled()) {
+            throw ValidationException::withMessages([
+                'decision' => ['Die angefragte Buchung wurde inzwischen storniert – hier gibt es nichts mehr zu entscheiden.'],
+            ]);
+        }
+    }
+
+    /** Run a change that makes a booking block its slot again; explain instead of failing on an overlap */
+    private function restore(callable $change, Booking $booking): void
+    {
+        try {
+            DB::transaction($change);
+        } catch (QueryException $e) {
+            if ($e->getCode() !== '23P01' && ! str_contains($e->getMessage(), 'bookings_no_overlap')) {
+                throw $e;
+            }
+
+            throw ValidationException::withMessages([
+                'decision' => [sprintf(
+                    'Nicht möglich: %s („%s“) kann nicht wiederhergestellt werden, weil das Fahrzeug in diesem Zeitraum inzwischen anderweitig gebucht ist.',
+                    $booking->vehicle->name,
+                    $booking->purpose,
+                )],
+            ]);
+        }
+    }
+
+    private function reactivate(BookingDecision $decision, Booking $loser, Booking $winner, callable $change): void
+    {
+        if ($loser->ends_at->isPast()) {
+            return;
+        }
+
+        $blocked = $this->conflictsFor($loser->vehicle_id, $loser->starts_at, $loser->ends_at, $loser->id)->isNotEmpty();
+        if ($blocked) {
+            return;
+        }
+
+        $change();
+
+        $decision->addHistory('reactivated', null, sprintf(
+            '„%s“ von %s, weil „%s“ von %s %s wurde.',
+            $loser->purpose,
+            $loser->user->name,
+            $winner->purpose,
+            $winner->user->name,
+            $winner->isCancelled() ? 'storniert' : 'geändert',
+        ));
+        $decision->save();
+
+        $this->notify($this->involvedUsers($decision), new BookingReactivatedNotification($decision, $loser->fresh(), $winner));
+    }
+
+    /** An approved change replaces the requester's own booking; that booking may have won an earlier decision */
+    private function releaseReplacedBooking(BookingDecision $decision): void
+    {
+        if ($decision->status === BookingDecision::STATUS_APPROVED && $decision->replacedBooking) {
+            $this->releaseSlotsFreedBy($decision->replacedBooking);
+        }
+    }
+
+    private function notifyOutcome(BookingDecision $decision, User $decider, bool $changed): void
+    {
+        $affected = $decision->conflictingBookings()->pluck('user')
+            ->push($decision->booking->user)
+            ->unique('id');
+        $this->notify($affected, new DecisionMadeNotification($decision, $changed));
+
+        $otherDeciders = User::whereIn('id', $decision->notified_user_ids ?? [])
+            ->where('id', '!=', $decider->id)
+            ->whereNotIn('id', $affected->pluck('id'))
+            ->get();
+        $this->notify($otherDeciders, new DecisionClosedNotification($decision, $changed));
+    }
+
+    /** Requester, owners of the conflicting bookings, the deciders who were asked and whoever decided */
+    private function involvedUsers(BookingDecision $decision): Collection
+    {
+        return $decision->conflictingBookings()->pluck('user')
+            ->push($decision->booking->user)
+            ->merge(User::whereIn('id', [...($decision->notified_user_ids ?? []), ...array_filter([$decision->decided_by])])->get())
+            ->unique('id')
+            ->values();
+    }
+
+    private function lock(BookingDecision $decision): BookingDecision
+    {
+        return BookingDecision::whereKey($decision->id)->lockForUpdate()->first();
     }
 
     private function conflictsFor(int $vehicleId, $startsAt, $endsAt, ?int $excludeBookingId = null): Collection
