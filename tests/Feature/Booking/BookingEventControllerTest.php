@@ -90,3 +90,17 @@ test('unauthenticated user cannot access events endpoint', function () {
     $this->getJson(route('bookings.events'))
         ->assertUnauthorized();
 });
+
+test('event title shows purpose and the name of the person who booked', function () {
+    $user = User::factory()->create(['name' => 'Hanna Hydrant']);
+    $booking = Booking::factory()->create([
+        'user_id' => $user->id,
+        'purpose' => 'Übungsdienst',
+        'starts_at' => Carbon::parse('2026-10-15 08:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-15 10:00', 'Europe/Berlin')->utc(),
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('bookings.events', ['start' => '2026-10-01T00:00:00', 'end' => '2026-11-01T00:00:00']))
+        ->assertJsonFragment(['title' => $booking->vehicle->displayName().' – Übungsdienst · Hanna Hydrant']);
+});

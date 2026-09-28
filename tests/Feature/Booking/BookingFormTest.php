@@ -66,3 +66,63 @@ test('booking form opens in edit mode on open-edit-booking event', function () {
 
     expect($booking->fresh()->purpose)->toBe('Übungsdienst geändert');
 });
+
+test('admin can search for a person and book for them', function () {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create(['name' => 'Hanna Hydrant', 'email' => 'hanna@example.com']);
+    User::factory()->create(['name' => 'Otto Other']);
+    $vehicle = Vehicle::factory()->create();
+
+    Livewire::actingAs($admin)
+        ->test(BookingForm::class)
+        ->dispatch('open-booking-form', date: '2026-10-05', vehicleId: $vehicle->id)
+        ->assertSet('ownerId', $admin->id)
+        ->set('ownerSearch', 'hydr')
+        ->assertSee('hanna@example.com')
+        ->assertDontSee('Otto Other')
+        ->call('selectOwner', $member->id)
+        ->assertSet('ownerId', $member->id)
+        ->set('purpose', 'Für Hanna')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Booking::where('purpose', 'Für Hanna')->sole()->user_id)->toBe($member->id);
+});
+
+test('admin can change the owner of an existing booking', function () {
+    $admin = User::factory()->admin()->create();
+    $newOwner = User::factory()->create();
+    $booking = Booking::factory()->create(['starts_at' => now()->addDay(), 'ends_at' => now()->addDay()->addHour()]);
+
+    Livewire::actingAs($admin)
+        ->test(BookingForm::class)
+        ->dispatch('open-edit-booking', bookingId: $booking->id)
+        ->assertSet('ownerId', $booking->user_id)
+        ->call('selectOwner', $newOwner->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($booking->fresh()->user_id)->toBe($newOwner->id);
+});
+
+test('members cannot search people or book for someone else', function () {
+    $member = User::factory()->create();
+    $other = User::factory()->create(['name' => 'Otto Other']);
+    $vehicle = Vehicle::factory()->create();
+
+    Livewire::actingAs($member)
+        ->test(BookingForm::class)
+        ->dispatch('open-booking-form', date: '2026-10-05', vehicleId: $vehicle->id)
+        ->assertDontSee('Gebucht für')
+        ->call('selectOwner', $other->id)
+        ->assertForbidden();
+
+    Livewire::actingAs($member)
+        ->test(BookingForm::class)
+        ->dispatch('open-booking-form', date: '2026-10-05', vehicleId: $vehicle->id)
+        ->set('ownerId', $other->id)
+        ->set('purpose', 'Versuch')
+        ->call('save');
+
+    expect(Booking::where('purpose', 'Versuch')->sole()->user_id)->toBe($member->id);
+});

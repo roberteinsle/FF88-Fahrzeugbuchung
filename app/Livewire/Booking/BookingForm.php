@@ -3,6 +3,7 @@
 namespace App\Livewire\Booking;
 
 use App\Models\Booking;
+use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\BookingService;
 use App\Services\DecisionService;
@@ -27,6 +28,11 @@ class BookingForm extends Component
     public string $notes = '';
 
     public ?int $groupId = null;
+
+    /** Who the booking belongs to; only admins can pick someone else */
+    public ?int $ownerId = null;
+
+    public string $ownerSearch = '';
 
     /** Why the requester needs the vehicle despite the conflict (conflict requests only) */
     public string $reason = '';
@@ -53,7 +59,8 @@ class BookingForm extends Component
     #[On('open-booking-form')]
     public function open(?string $date = null, ?int $vehicleId = null): void
     {
-        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'bookingId', 'reason']);
+        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'bookingId', 'reason', 'ownerSearch']);
+        $this->ownerId = auth()->id();
         $this->available = true;
 
         if ($date) {
@@ -68,6 +75,14 @@ class BookingForm extends Component
         $this->show = true;
     }
 
+    public function selectOwner(int $userId): void
+    {
+        abort_unless(auth()->user()->is_admin, 403);
+
+        $this->ownerId = User::active()->findOrFail($userId)->id;
+        $this->ownerSearch = '';
+    }
+
     public function close(): void
     {
         $this->show = false;
@@ -76,7 +91,7 @@ class BookingForm extends Component
     #[On('open-edit-booking')]
     public function openForEdit(int $bookingId): void
     {
-        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'reason']);
+        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'reason', 'ownerSearch']);
         $this->available = true;
         $this->loadBooking($bookingId);
         $this->show = true;
@@ -157,7 +172,13 @@ class BookingForm extends Component
             return;
         }
 
+        // Non-admins always book for themselves
+        $owner = auth()->user()->is_admin && $this->ownerId
+            ? User::findOrFail($this->ownerId)
+            : auth()->user();
+
         $data = [
+            'user_id' => $owner->id,
             'vehicle_id' => $this->vehicleId,
             'group_id' => $this->groupId,
             'starts_at' => $starts,
@@ -183,7 +204,7 @@ class BookingForm extends Component
             );
 
             try {
-                $decisions->request($data, auth()->user(), $this->reason, $replaces);
+                $decisions->request($data, $owner, $this->reason, $replaces);
             } catch (\Illuminate\Validation\ValidationException $e) {
                 foreach ($e->errors() as $key => $messages) {
                     $this->addError($key, $messages[0]);
@@ -204,7 +225,7 @@ class BookingForm extends Component
                 $service->update($booking, $data);
             } else {
                 $this->authorize('create', Booking::class);
-                $service->create($data, auth()->id());
+                $service->create($data, $owner->id);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             foreach ($e->errors() as $key => $messages) {
@@ -222,6 +243,7 @@ class BookingForm extends Component
     {
         $booking = Booking::findOrFail($bookingId);
         $this->bookingId = $booking->id;
+        $this->ownerId = $booking->user_id;
         $this->vehicleId = $booking->vehicle_id;
         $this->groupId = $booking->group_id;
         $this->startsAt = $booking->starts_at->setTimezone('Europe/Berlin')->format('Y-m-d\TH:i');
@@ -236,9 +258,21 @@ class BookingForm extends Component
         $vehicles = Vehicle::active()->get();
         $groups = auth()->user()?->groups ?? collect();
 
+        $isAdmin = (bool) auth()->user()?->is_admin;
+        $term = trim($this->ownerSearch);
+
         return view('livewire.booking.booking-form', [
             'vehicles' => $vehicles,
             'groups' => $groups,
+            'isAdmin' => $isAdmin,
+            'owner' => $this->ownerId ? User::find($this->ownerId) : null,
+            'ownerResults' => $isAdmin && mb_strlen($term) >= 2
+                ? User::active()
+                    ->where(fn ($q) => $q->whereLike('name', "%{$term}%")->orWhereLike('email', "%{$term}%"))
+                    ->orderBy('name')
+                    ->limit(8)
+                    ->get()
+                : collect(),
         ]);
     }
 }

@@ -26,6 +26,48 @@
             {{-- Form --}}
             <form wire:submit="save" class="flex-1 flex flex-col px-4 py-5 gap-5">
 
+                {{-- Gebucht für (admins only): search instead of a dropdown --}}
+                @if($isAdmin)
+                <div>
+                    <label for="owner_search" class="block text-sm font-medium text-gray-700 mb-1">Gebucht für</label>
+                    @if($owner)
+                    <div class="flex items-center justify-between rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 mb-2">
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ $owner->name }}</p>
+                            <p class="text-xs text-gray-500 truncate">{{ $owner->email }}</p>
+                        </div>
+                        @if($owner->id === auth()->id())
+                        <span class="text-xs text-gray-400 shrink-0">du</span>
+                        @endif
+                    </div>
+                    @endif
+                    <input
+                        id="owner_search"
+                        type="search"
+                        wire:model.live.debounce.300ms="ownerSearch"
+                        placeholder="Andere Person suchen (Name oder E-Mail) …"
+                        autocomplete="off"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
+                    />
+                    @if(mb_strlen(trim($ownerSearch)) >= 2)
+                    <div class="mt-1 rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        @forelse($ownerResults as $result)
+                        <button
+                            type="button"
+                            wire:click="selectOwner({{ $result->id }})"
+                            class="w-full text-left px-3 py-2 hover:bg-gray-50"
+                        >
+                            <span class="block text-sm text-gray-900">{{ $result->name }}</span>
+                            <span class="block text-xs text-gray-500">{{ $result->email }}</span>
+                        </button>
+                        @empty
+                        <p class="px-3 py-2 text-sm text-gray-400">Niemand gefunden.</p>
+                        @endforelse
+                    </div>
+                    @endif
+                </div>
+                @endif
+
                 {{-- Fahrzeug --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Fahrzeug *</label>

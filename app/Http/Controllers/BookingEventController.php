@@ -34,7 +34,7 @@ class BookingEventController extends Controller
             return [
                 'id' => $booking->id,
                 'title' => ($booking->isPending() ? 'Angefragt: ' : '')
-                    . $booking->vehicle->displayName() . ' – ' . $booking->purpose,
+                    . $booking->vehicle->displayName() . ' – ' . $booking->purpose . ' · ' . $booking->user->name,
                 'start' => $booking->starts_at->toIso8601String(),
                 'end' => $booking->ends_at->toIso8601String(),
                 'color' => $booking->vehicle->color,
