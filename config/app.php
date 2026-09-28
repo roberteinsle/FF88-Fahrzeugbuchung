@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Accounts
+    |--------------------------------------------------------------------------
+    |
+    | Comma-separated e-mail addresses that `php artisan app:ensure-admins`
+    | creates or activates as admins. Runs automatically on container start.
+    |
+    */
+
+    'admin_emails' => env('ADMIN_EMAILS', ''),
+
 ];

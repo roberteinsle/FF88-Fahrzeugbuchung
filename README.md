@@ -54,7 +54,7 @@ composer dev                # Server, Queue-Worker, Logs und Vite parallel
 
 ### Erster Login
 
-Der `UserSeeder` legt einen Admin-Benutzer an. Passe die E-Mail-Adresse in [database/seeders/UserSeeder.php](database/seeders/UserSeeder.php) vor dem Seeden an, fordere unter `/auth/login` einen Magic Link an und öffne danach `/admin`.
+Lokal legt der `UserSeeder` einen Admin an ([database/seeders/UserSeeder.php](database/seeders/UserSeeder.php)). Im Docker-Container werden stattdessen die Adressen aus `ADMIN_EMAILS` bei jedem Start als Admin angelegt. Fordere unter `/auth/login` einen Magic Link an und öffne danach `/admin`.
 
 ## Konfiguration
 
@@ -65,11 +65,12 @@ Die wichtigsten Variablen aus [.env.example](.env.example):
 | `APP_URL`                | Öffentliche URL. Wird für die Links in den Magic-Link-Mails verwendet. |
 | `DB_*`                   | Zugangsdaten für PostgreSQL                             |
 | `MAIL_*`                 | SMTP-Server für den Versand der Login-Links             |
+| `ADMIN_EMAILS`           | Kommagetrennte Adressen, die beim Container-Start als Admin angelegt bzw. aktiviert werden |
 | `MAGIC_LINK_TTL_MINUTES` | Gültigkeit eines Login-Links in Minuten (Standard: 15)  |
 | `SESSION_LIFETIME`       | Session-Dauer in Minuten (Standard: 90 Tage)            |
-| `QUEUE_CONNECTION`       | `database`, es wird kein Redis benötigt                 |
+| `LOG_CHANNEL`            | Im Docker-Image `stderr`, damit Fehler in den Container-Logs erscheinen |
 
-Für den Mailversand muss ein Queue-Worker laufen (`php artisan queue:work`). Abgelaufene Login-Tokens räumt der Scheduler täglich auf (`php artisan schedule:work` bzw. ein Cronjob).
+Login-Mails werden sofort verschickt, ein Queue-Worker ist dafür nicht nötig. Abgelaufene Login-Tokens räumt der Scheduler täglich auf (`php artisan schedule:work` bzw. ein Cronjob).
 
 ## Tests
 
