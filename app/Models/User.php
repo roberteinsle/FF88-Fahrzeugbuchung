@@ -20,6 +20,7 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'phone',
+        'calendar_view',
         'is_admin',
         'is_active',
         'last_login_at',
@@ -37,6 +38,20 @@ class User extends Authenticatable implements FilamentUser
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /** FullCalendar view names a user can pick as their default */
+    public const CALENDAR_VIEWS = [
+        'timeGridWeek' => 'Woche',
+        'dayGridMonth' => 'Monat',
+        'listWeek' => 'Liste',
+    ];
+
+    public function calendarView(): string
+    {
+        return array_key_exists($this->calendar_view ?? '', self::CALENDAR_VIEWS)
+            ? $this->calendar_view
+            : 'timeGridWeek';
     }
 
     public function isAdmin(): bool

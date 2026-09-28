@@ -55,6 +55,8 @@
 
         </div>
 
+        <livewire:profile.settings />
+
         {{-- Logout --}}
         <form method="POST" action="{{ route('logout') }}">
             @csrf

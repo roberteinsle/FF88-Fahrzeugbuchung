@@ -76,6 +76,7 @@ class BookingCalendar extends Component
         return view('livewire.calendar.booking-calendar', [
             'vehicles' => $vehicles,
             'eventsUrl' => route('bookings.events'),
+            'initialView' => auth()->user()->calendarView(),
         ]);
     }
 }

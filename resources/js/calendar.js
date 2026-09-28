@@ -26,7 +26,7 @@ function initCalendar() {
         plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
         locale: deLocale,
         timeZone: 'Europe/Berlin',
-        initialView: isMobile ? 'listWeek' : 'dayGridMonth',
+        initialView: el.dataset.initialView || 'timeGridWeek',
         firstDay: 1,
         headerToolbar: {
             left: 'prev,next today',
@@ -75,7 +75,7 @@ function initCalendar() {
                 // On mobile month view, show day list instead of opening form
                 window.Livewire?.dispatch('day-list-open', { date: info.dateStr });
             } else {
-                window.Livewire?.dispatch('booking-form-open', {
+                window.Livewire?.dispatch('open-booking-form', {
                     date: info.dateStr,
                     vehicleId: null,
                 });

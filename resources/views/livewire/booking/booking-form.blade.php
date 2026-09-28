@@ -1,13 +1,7 @@
 <div>
     {{-- Slide-over panel backdrop + panel --}}
     @if($show)
-    <div
-        class="fixed inset-0 z-40 flex justify-end"
-        x-data
-        @open-booking-form.window="
-            $wire.open($event.detail.date ?? null, $event.detail.vehicleId ?? null)
-        "
-    >
+    <div class="fixed inset-0 z-[60] flex justify-end">
         {{-- Backdrop --}}
         <div
             class="absolute inset-0 bg-black/40"
@@ -87,7 +81,7 @@
                             id="starts_at"
                             type="datetime-local"
                             wire:model.live.debounce.500ms="startsAt"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
                         />
                         @error('startsAt') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                     </div>
@@ -97,7 +91,7 @@
                             id="ends_at"
                             type="datetime-local"
                             wire:model.live.debounce.500ms="endsAt"
-                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
                         />
                         @error('endsAt') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                     </div>
@@ -111,7 +105,7 @@
                         type="text"
                         wire:model="purpose"
                         placeholder="z. B. Jugendfeuerwehr Übung"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
                     />
                     @error('purpose') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                 </div>
@@ -124,7 +118,7 @@
                         type="text"
                         wire:model="destination"
                         placeholder="z. B. Feuerwehrhaus Braak"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
                     />
                 </div>
 
@@ -135,7 +129,7 @@
                     <select
                         id="group_id"
                         wire:model="groupId"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
                     >
                         <option value="">– keine –</option>
                         @foreach($groups as $group)
@@ -153,7 +147,7 @@
                         wire:model="notes"
                         rows="3"
                         placeholder="Weitere Infos für Mitglieder …"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent resize-none"
                     ></textarea>
                     @error('notes') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                 </div>
@@ -163,7 +157,7 @@
                     <button
                         type="submit"
                         class="w-full py-2.5 px-4 rounded-xl font-semibold text-white text-sm transition-colors
-                               {{ $available ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed' }}"
+                               {{ $available ? 'bg-fw-red hover:bg-fw-red-dark' : 'bg-gray-400 cursor-not-allowed' }}"
                         @disabled(!$available && $conflict !== null)
                     >
                         <span wire:loading.remove wire:target="save">
@@ -176,13 +170,5 @@
             </form>
         </div>
     </div>
-    @else
-    {{-- Hidden but listens for open events --}}
-    <div
-        x-data
-        @open-booking-form.window="
-            $wire.open($event.detail.date ?? null, $event.detail.vehicleId ?? null)
-        "
-    ></div>
     @endif
 </div>

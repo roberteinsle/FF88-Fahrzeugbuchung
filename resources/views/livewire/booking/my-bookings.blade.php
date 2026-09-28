@@ -55,7 +55,7 @@
                         @can('update', $booking)
                         <button
                             wire:click="editBooking({{ $booking->id }})"
-                            class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            class="p-1.5 rounded-lg text-gray-400 hover:text-fw-navy hover:bg-gray-100 transition-colors"
                             title="Bearbeiten"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

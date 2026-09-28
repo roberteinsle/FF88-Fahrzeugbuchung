@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\BookingService;
 use Carbon\Carbon;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class BookingForm extends Component
@@ -45,6 +46,7 @@ class BookingForm extends Component
         }
     }
 
+    #[On('open-booking-form')]
     public function open(?string $date = null, ?int $vehicleId = null): void
     {
         $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'bookingId']);

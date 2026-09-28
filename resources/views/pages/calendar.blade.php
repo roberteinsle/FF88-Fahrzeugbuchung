@@ -15,7 +15,8 @@
 
     {{-- FAB: New Booking --}}
     <button
-        @click="window.Livewire?.dispatch('open-booking-form', { date: null, vehicleId: null })"
+        x-data
+        @click="Livewire.dispatch('open-booking-form', { date: null, vehicleId: null })"
         class="fab-button w-14 h-14 rounded-full bg-fw-red hover:bg-fw-red-dark text-white shadow-lg flex items-center justify-center transition-colors"
         title="Neue Buchung"
     >

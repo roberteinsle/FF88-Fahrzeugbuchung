@@ -2,7 +2,6 @@
     x-data="{}"
     @booking-detail-open.window="$wire.openBookingDetail($event.detail.bookingId)"
     @day-list-open.window="$wire.openDayList($event.detail.date)"
-    @booking-form-open.window="$dispatch('open-booking-form', $event.detail)"
 >
     {{-- Vehicle filter chips --}}
     <div class="flex gap-2 overflow-x-auto px-4 py-3 -mx-4 sm:mx-0 sm:px-0 scrollbar-none">
@@ -29,6 +28,7 @@
         wire:ignore
         id="booking-calendar"
         data-events-url="{{ $eventsUrl }}"
+        data-initial-view="{{ $initialView }}"
         class="mt-2 bg-white rounded-2xl border border-fw-grey-light p-2 sm:p-4"
     ></div>
 

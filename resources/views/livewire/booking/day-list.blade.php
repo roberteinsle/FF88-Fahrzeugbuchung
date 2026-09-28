@@ -1,7 +1,7 @@
 <div>
     {{-- Bottom sheet modal --}}
     <div
-        class="fixed inset-0 z-40 flex items-end justify-center"
+        class="fixed inset-0 z-[60] flex items-end justify-center"
         @close-day-list.window="$wire.$parent.closeDayList()"
     >
         {{-- Backdrop --}}
@@ -75,7 +75,7 @@
             <div class="px-4 py-4 border-t border-gray-100 safe-area-bottom">
                 <button
                     wire:click="openNewBooking"
-                    class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white text-sm transition-colors"
+                    class="w-full py-2.5 px-4 rounded-xl bg-fw-red hover:bg-fw-red-dark font-semibold text-white text-sm transition-colors"
                 >
                     + Neue Buchung für diesen Tag
                 </button>

@@ -1,7 +1,7 @@
 <div>
     {{-- Modal backdrop + dialog --}}
     <div
-        class="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4"
+        class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
         @close-detail-modal.window="$wire.$parent.closeDetailModal()"
     >
         {{-- Backdrop --}}
