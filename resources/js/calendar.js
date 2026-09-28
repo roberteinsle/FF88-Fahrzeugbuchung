@@ -130,6 +130,11 @@ function initCalendar() {
             return true; // default rendering
         },
 
+        // FullCalendar's own fc-event-past works per day; mark bookings that have actually ended
+        eventClassNames: function(arg) {
+            return arg.event.end && arg.event.end < new Date() ? ['fc-ev-over'] : [];
+        },
+
         eventClick: function(info) {
             const props = info.event.extendedProps;
             window.Livewire?.dispatch('booking-detail-open', { bookingId: props.bookingId });

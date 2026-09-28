@@ -111,6 +111,19 @@
     text-overflow: clip;
 }
 
+/* List view: bookings that are over step back, upcoming ones stay prominent */
+.fc .fc-list-event.fc-ev-over td {
+    opacity: 0.45;
+}
+.fc .fc-list-event.fc-ev-over .fc-list-event-dot,
+.fc .fc-list-event.fc-ev-over .fc-ev-icon {
+    filter: grayscale(1);
+}
+.fc .fc-list-day.fc-day-past .fc-list-day-cushion {
+    color: var(--color-fw-grey-mid);
+    font-weight: 400;
+}
+
 /* Conflict requests waiting for a decision: striped and faded */
 .fc .fc-event-pending {
     opacity: 0.7;
