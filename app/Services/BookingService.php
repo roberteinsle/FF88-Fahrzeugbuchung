@@ -36,7 +36,7 @@ class BookingService
             ];
         }
 
-        return ['available' => true, 'conflict' => null, 'alternatives' => []];
+        return ['available' => true, 'conflict' => null, 'alternatives' => collect()];
     }
 
     public function create(array $data, int $userId): Booking

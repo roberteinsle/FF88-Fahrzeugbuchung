@@ -28,3 +28,16 @@ test('booking form opens without date from the plus button', function () {
         ->assertSet('show', true)
         ->assertSee('Neue Buchung');
 });
+
+test('switching to a free vehicle checks availability without error', function () {
+    $user = User::factory()->create();
+    $first = Vehicle::factory()->create();
+    $second = Vehicle::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(BookingForm::class)
+        ->dispatch('open-booking-form', date: '2026-10-05', vehicleId: $first->id)
+        ->set('vehicleId', $second->id)
+        ->assertSet('available', true)
+        ->assertSet('alternatives', []);
+});
