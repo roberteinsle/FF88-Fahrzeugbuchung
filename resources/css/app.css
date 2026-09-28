@@ -25,6 +25,67 @@
     --color-fw-grey-bg:    #F7F7F7;
 }
 
+/* FullCalendar: brand colors */
+.fc {
+    --fc-button-bg-color: var(--color-fw-navy);
+    --fc-button-border-color: var(--color-fw-navy);
+    --fc-button-hover-bg-color: #2a3a63;
+    --fc-button-hover-border-color: #2a3a63;
+    --fc-button-active-bg-color: var(--color-fw-red);
+    --fc-button-active-border-color: var(--color-fw-red);
+    --fc-today-bg-color: rgba(237, 47, 18, 0.06);
+    --fc-neutral-bg-color: var(--color-fw-grey-bg);
+    --fc-border-color: var(--color-fw-grey-light);
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-fw-grey-dark);
+}
+
+.fc .fc-button {
+    font-size: 0.875rem;
+    box-shadow: none !important;
+}
+
+.fc .fc-list-empty {
+    background: transparent;
+    color: var(--color-fw-grey-mid);
+}
+
+/* FullCalendar mobile: title on its own row, buttons in one row below */
+@media (max-width: 639px) {
+    .fc .fc-header-toolbar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem !important;
+    }
+    .fc .fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+        order: -1;
+        width: 100%;
+        justify-content: center;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 1.05rem;
+    }
+    .fc .fc-header-toolbar .fc-toolbar-chunk {
+        display: flex;
+    }
+    .fc .fc-button {
+        font-size: 0.78rem;
+        padding: 0.35rem 0.5rem;
+    }
+    .fc .fc-toolbar .fc-today-button {
+        margin-left: 0.25rem;
+    }
+}
+
+.fc .fc-button-primary:disabled {
+    background-color: var(--color-fw-grey-mid);
+    border-color: var(--color-fw-grey-mid);
+}
+
 /* FullCalendar mobile tweaks */
 .fc-event-dot {
     display: inline-block;

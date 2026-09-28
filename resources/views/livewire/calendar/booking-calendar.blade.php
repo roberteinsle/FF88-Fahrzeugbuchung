@@ -29,8 +29,7 @@
         wire:ignore
         id="booking-calendar"
         data-events-url="{{ $eventsUrl }}"
-        class="mt-2"
-        style="min-height: 500px;"
+        class="mt-2 bg-white rounded-2xl border border-fw-grey-light p-2 sm:p-4"
     ></div>
 
     {{-- Booking detail modal --}}

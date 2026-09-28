@@ -43,6 +43,16 @@ function initCalendar() {
         slotMinTime: '00:00:00',
         slotMaxTime: '24:00:00',
         allDaySlot: false,
+        height: 'auto',
+        views: isMobile ? {
+            // Phones: shorter title, e.g. "28. Sept. – 4. Okt."
+            timeGridWeek: {
+                titleFormat: { month: 'short', day: 'numeric' },
+                // "M, 28." instead of "Mo. 28.9." so seven columns fit
+                dayHeaderFormat: { weekday: 'narrow', day: 'numeric' },
+            },
+            listWeek: { titleFormat: { month: 'short', day: 'numeric' } },
+        } : {},
         events: buildEventsUrl([]),
 
         // Month view on mobile: show colored dots, no text
@@ -73,6 +83,16 @@ function initCalendar() {
         },
 
         viewDidMount: function(arg) {
+            // Month/list grow with their content; the week grid scrolls inside a fixed height
+            // (height is not a view-specific option in FullCalendar)
+            const height = arg.view.type === 'timeGridWeek' ? 650 : 'auto';
+            // Deferred: options can't be changed while FullCalendar is still rendering the view
+            setTimeout(() => {
+                if (calendar && calendar.getOption('height') !== height) {
+                    calendar.setOption('height', height);
+                    if (height !== 'auto') calendar.scrollToTime('06:00:00');
+                }
+            });
             window.Livewire?.dispatch('calendar-view-changed', { view: arg.view.type });
         },
     });
