@@ -57,6 +57,8 @@
 
         <livewire:profile.settings />
 
+        <livewire:feedback.feedback-list />
+
         {{-- Logout --}}
         <form method="POST" action="{{ route('logout') }}">
             @csrf

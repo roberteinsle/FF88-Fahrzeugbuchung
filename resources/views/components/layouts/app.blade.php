@@ -10,15 +10,16 @@
 </head>
 <body class="h-full">
     @php($openDecisions = auth()->user()?->canDecide() ? \App\Models\BookingDecision::pending()->count() : 0)
+    @php($unreadFeedback = auth()->check() ? auth()->user()->feedbackThreads()->where('unread_for_user', true)->exists() : false)
     <div class="min-h-full flex flex-col">
         {{-- Top Header (only on desktop) --}}
         <header class="hidden sm:block bg-fw-navy text-white shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-14">
-                    <div class="flex items-center gap-3">
+                    <a href="{{ route('calendar') }}" class="flex items-center gap-3">
                         <img src="{{ asset('images/ff-braak-logo.webp') }}" alt="FF Braak" class="h-8 w-auto brightness-0 invert">
                         <span class="font-semibold text-sm">FF Braak Fahrzeugbuchung</span>
-                    </div>
+                    </a>
                     @auth
                     <nav class="flex items-center gap-6 text-sm">
                         @if($openDecisions > 0)
@@ -31,7 +32,7 @@
                         @endif
                         <a href="{{ route('calendar') }}" class="hover:text-fw-grey-light {{ request()->routeIs('calendar') ? 'font-semibold' : '' }}">Kalender</a>
                         <a href="{{ route('my-bookings') }}" class="hover:text-fw-grey-light {{ request()->routeIs('my-bookings') ? 'font-semibold' : '' }}">Meine Buchungen</a>
-                        <a href="{{ route('profile') }}" class="hover:text-fw-grey-light {{ request()->routeIs('profile') ? 'font-semibold' : '' }}">Profil</a>
+                        <a href="{{ route('profile') }}" class="hover:text-fw-grey-light {{ request()->routeIs('profile') ? 'font-semibold' : '' }}">Profil @if($unreadFeedback)<span class="ml-1 inline-block w-2 h-2 rounded-full bg-fw-red align-middle" title="Neue Antwort auf dein Feedback"></span>@endif</a>
                         @if(auth()->user()->is_admin)
                         <a href="{{ route('filament.admin.pages.dashboard') }}" class="hover:text-fw-grey-light">Admin</a>
                         @endif
@@ -78,7 +79,7 @@
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
-                    Profil
+                    <span>Profil @if($unreadFeedback)<span class="ml-1 inline-block w-2 h-2 rounded-full bg-fw-red align-middle"></span>@endif</span>
                 </a>
             </div>
         </nav>

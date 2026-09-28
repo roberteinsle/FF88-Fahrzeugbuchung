@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BookingEventController;
 use App\Models\BookingDecision;
+use App\Models\FeedbackThread;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect
@@ -31,6 +32,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/calendar', fn () => view('pages.calendar'))->name('calendar');
     Route::get('/my-bookings', fn () => view('pages.my-bookings'))->name('my-bookings');
     Route::get('/profile', fn () => view('pages.profile'))->name('profile');
+
+    // Feedback conversation with the admins (own threads only)
+    Route::get('/feedback/{thread}', function (FeedbackThread $thread) {
+        abort_unless($thread->user_id === auth()->id(), 403);
+
+        return view('pages.feedback.show', ['thread' => $thread]);
+    })->name('feedback.show');
 
     // Conflict decisions (deciders and admins)
     Route::middleware('can:decide-bookings')->group(function () {
