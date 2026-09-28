@@ -17,9 +17,11 @@
     "dependencies": {
         "@fullcalendar/core": "^6.1.15",
         "@fullcalendar/daygrid": "^6.1.15",
-        "@fullcalendar/timegrid": "^6.1.15",
-        "@fullcalendar/list": "^6.1.15",
         "@fullcalendar/interaction": "^6.1.15",
-        "alpinejs": "^3.17.4"
+        "@fullcalendar/list": "^6.1.15",
+        "@fullcalendar/luxon3": "^6.1.21",
+        "@fullcalendar/timegrid": "^6.1.15",
+        "alpinejs": "^3.17.4",
+        "luxon": "^3.7.2"
     }
 }

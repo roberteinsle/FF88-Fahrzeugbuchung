@@ -3,6 +3,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
+import luxonPlugin from '@fullcalendar/luxon3';
 import deLocale from '@fullcalendar/core/locales/de';
 
 let calendar = null;
@@ -23,8 +24,9 @@ function initCalendar() {
     const isMobile = window.innerWidth < 430;
 
     calendar = new Calendar(el, {
-        plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+        plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin, luxonPlugin],
         locale: deLocale,
+        // Named time zones need the Luxon plugin; without it FullCalendar silently shows UTC
         timeZone: 'Europe/Berlin',
         initialView: el.dataset.initialView || 'timeGridWeek',
         firstDay: 1,
