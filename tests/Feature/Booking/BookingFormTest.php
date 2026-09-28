@@ -126,3 +126,21 @@ test('members cannot search people or book for someone else', function () {
 
     expect(Booking::where('purpose', 'Versuch')->sole()->user_id)->toBe($member->id);
 });
+
+test('moving the start moves the end and keeps the duration', function () {
+    $user = User::factory()->create();
+    $vehicle = Vehicle::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test(BookingForm::class)
+        ->dispatch('open-booking-form', date: '2026-10-05', vehicleId: $vehicle->id)
+        ->assertSet('startsAt', '2026-10-05T08:00')
+        ->assertSet('endsAt', '2026-10-05T18:00')
+        ->set('startsAt', '2026-10-09T08:00')
+        ->assertSet('endsAt', '2026-10-09T18:00')
+        ->set('startsAt', '2026-10-09T20:00')
+        ->assertSet('endsAt', '2026-10-10T06:00')
+        ->set('endsAt', '2026-10-09T19:00')   // end before start: no duration to keep
+        ->set('startsAt', '2026-10-12T10:00')
+        ->assertSet('endsAt', '2026-10-12T11:00');
+});

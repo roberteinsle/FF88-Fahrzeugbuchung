@@ -102,6 +102,22 @@ class BookingForm extends Component
         $this->checkAvailability();
     }
 
+    /** Moving the start moves the end along, keeping the duration (1 hour if there was none) */
+    public function updatingStartsAt(string $value): void
+    {
+        $format = 'Y-m-d\TH:i';
+        $newStart = Carbon::canBeCreatedFromFormat($value, $format) ? Carbon::createFromFormat($format, $value) : null;
+        $oldStart = Carbon::canBeCreatedFromFormat($this->startsAt, $format) ? Carbon::createFromFormat($format, $this->startsAt) : null;
+        $oldEnd = Carbon::canBeCreatedFromFormat($this->endsAt, $format) ? Carbon::createFromFormat($format, $this->endsAt) : null;
+
+        if (! $newStart) {
+            return;
+        }
+
+        $minutes = $oldStart && $oldEnd && $oldEnd > $oldStart ? $oldStart->diffInMinutes($oldEnd) : 60;
+        $this->endsAt = $newStart->copy()->addMinutes($minutes)->format($format);
+    }
+
     public function updatedStartsAt(): void
     {
         $this->checkAvailability();
