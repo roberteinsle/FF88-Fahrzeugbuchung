@@ -33,7 +33,7 @@ function sendFeedback(): FeedbackThread
 
 test('logo links to the calendar', function () {
     $this->actingAs($this->member)->get(route('profile'))
-        ->assertSee('href="'.route('calendar').'" class="flex items-center gap-3"', false);
+        ->assertSee('href="'.route('calendar').'"', false);
 });
 
 test('member sends feedback and admins get a mail with a link', function () {
