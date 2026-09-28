@@ -116,8 +116,6 @@
     @endif
 
     {{-- BookingForm (edit mode) --}}
-    <livewire:booking.booking-form
-        @open-edit-booking.window="$wire.openForEdit($event.detail.bookingId)"
-    />
+    <livewire:booking.booking-form />
 
 </div>

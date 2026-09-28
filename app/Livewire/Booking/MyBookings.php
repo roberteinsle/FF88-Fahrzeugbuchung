@@ -4,6 +4,7 @@ namespace App\Livewire\Booking;
 
 use App\Models\Booking;
 use App\Services\BookingService;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -24,6 +25,10 @@ class MyBookings extends Component
     {
         $this->dispatch('open-edit-booking', bookingId: $bookingId);
     }
+
+    /** Re-render after the booking form saved a change */
+    #[On('calendar-refresh')]
+    public function refreshList(): void {}
 
     public function cancelBooking(int $bookingId, BookingService $service): void
     {

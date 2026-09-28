@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Booking\BookingForm;
+use App\Models\Booking;
 use App\Models\User;
 use App\Models\Vehicle;
 use Livewire\Livewire;
@@ -40,4 +41,28 @@ test('switching to a free vehicle checks availability without error', function (
         ->set('vehicleId', $second->id)
         ->assertSet('available', true)
         ->assertSet('alternatives', []);
+});
+
+test('booking form opens in edit mode on open-edit-booking event', function () {
+    $user = User::factory()->create();
+    $booking = Booking::factory()->create([
+        'user_id' => $user->id,
+        'purpose' => 'Übungsdienst',
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addHours(2),
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(BookingForm::class)
+        ->dispatch('open-edit-booking', bookingId: $booking->id)
+        ->assertSet('show', true)
+        ->assertSet('bookingId', $booking->id)
+        ->assertSet('purpose', 'Übungsdienst')
+        ->set('purpose', 'Übungsdienst geändert')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('show', false)
+        ->assertDispatched('calendar-refresh');
+
+    expect($booking->fresh()->purpose)->toBe('Übungsdienst geändert');
 });

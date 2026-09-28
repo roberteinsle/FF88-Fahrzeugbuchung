@@ -69,6 +69,7 @@ class BookingForm extends Component
         $this->show = false;
     }
 
+    #[On('open-edit-booking')]
     public function openForEdit(int $bookingId): void
     {
         $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives']);
