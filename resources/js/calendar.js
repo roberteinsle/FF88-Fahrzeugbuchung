@@ -23,12 +23,16 @@ function initCalendar() {
 
     const isMobile = window.innerWidth < 430;
 
+    const initialView = el.dataset.initialView || 'timeGridWeek';
+    // Month/list grow with their content; the week grid scrolls inside a fixed height
+    const heightFor = (viewType) => (viewType === 'timeGridWeek' ? 650 : 'auto');
+
     calendar = new Calendar(el, {
         plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin, luxonPlugin],
         locale: deLocale,
         // Named time zones need the Luxon plugin; without it FullCalendar silently shows UTC
         timeZone: 'Europe/Berlin',
-        initialView: el.dataset.initialView || 'timeGridWeek',
+        initialView,
         firstDay: 1,
         headerToolbar: {
             left: 'prev,next today',
@@ -45,7 +49,7 @@ function initCalendar() {
         slotMinTime: '00:00:00',
         slotMaxTime: '24:00:00',
         allDaySlot: false,
-        height: 'auto',
+        height: heightFor(initialView),
         views: isMobile ? {
             // Phones: shorter title, e.g. "28. Sept. – 4. Okt."
             timeGridWeek: {
@@ -85,9 +89,8 @@ function initCalendar() {
         },
 
         viewDidMount: function(arg) {
-            // Month/list grow with their content; the week grid scrolls inside a fixed height
-            // (height is not a view-specific option in FullCalendar)
-            const height = arg.view.type === 'timeGridWeek' ? 650 : 'auto';
+            // height is not a view-specific option in FullCalendar, so switch it here
+            const height = heightFor(arg.view.type);
             // Deferred: options can't be changed while FullCalendar is still rendering the view
             setTimeout(() => {
                 if (calendar && calendar.getOption('height') !== height) {

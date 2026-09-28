@@ -18,6 +18,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'phone' => fake()->optional(0.4)->phoneNumber(),
             'is_admin' => false,
+            'is_decider' => false,
             'is_active' => true,
             'last_login_at' => null,
             'remember_token' => Str::random(10),
@@ -27,6 +28,11 @@ class UserFactory extends Factory
     public function admin(): static
     {
         return $this->state(['is_admin' => true]);
+    }
+
+    public function decider(): static
+    {
+        return $this->state(['is_decider' => true]);
     }
 
     public function inactive(): static

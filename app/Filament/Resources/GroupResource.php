@@ -27,10 +27,6 @@ class GroupResource extends Resource
                 ->required()
                 ->maxLength(255),
 
-            Forms\Components\Toggle::make('receives_escalations')
-                ->label('Erhält Eskalationen')
-                ->helperText('Mitglieder dieser Gruppe entscheiden eskalierte Buchungskonflikte'),
-
             Forms\Components\TextInput::make('sort_order')
                 ->label('Reihenfolge')
                 ->numeric()
@@ -46,10 +42,6 @@ class GroupResource extends Resource
                     ->label('Name')
                     ->searchable()
                     ->sortable(),
-
-                Tables\Columns\IconColumn::make('receives_escalations')
-                    ->label('Eskalationen')
-                    ->boolean(),
 
                 Tables\Columns\TextColumn::make('users_count')
                     ->label('Mitglieder')

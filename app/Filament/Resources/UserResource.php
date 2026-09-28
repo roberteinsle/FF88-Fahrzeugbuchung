@@ -53,6 +53,10 @@ class UserResource extends Resource
                 ->label('Administrator')
                 ->helperText('Admins haben Zugriff auf das Admin-Backend und können alle Buchungen bearbeiten'),
 
+            Forms\Components\Toggle::make('is_decider')
+                ->label('Entscheider')
+                ->helperText('Entscheider werden bei Buchungskonflikten per E-Mail gefragt und können entscheiden, wer das Fahrzeug bekommt'),
+
             Forms\Components\Toggle::make('is_active')
                 ->label('Aktiv')
                 ->default(true)
@@ -82,6 +86,10 @@ class UserResource extends Resource
                     ->label('Admin')
                     ->boolean(),
 
+                Tables\Columns\IconColumn::make('is_decider')
+                    ->label('Entscheider')
+                    ->boolean(),
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktiv')
                     ->boolean(),
@@ -99,6 +107,7 @@ class UserResource extends Resource
                     ->multiple()
                     ->preload(),
                 Tables\Filters\TernaryFilter::make('is_admin')->label('Administrator'),
+                Tables\Filters\TernaryFilter::make('is_decider')->label('Entscheider'),
                 Tables\Filters\TernaryFilter::make('is_active')->label('Aktiv'),
             ])
             ->actions([

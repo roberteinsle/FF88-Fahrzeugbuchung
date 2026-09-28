@@ -22,6 +22,7 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'calendar_view',
         'is_admin',
+        'is_decider',
         'is_active',
         'last_login_at',
         'remember_token',
@@ -35,6 +36,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             'is_admin' => 'boolean',
+            'is_decider' => 'boolean',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
         ];
@@ -57,6 +59,12 @@ class User extends Authenticatable implements FilamentUser
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;
+    }
+
+    /** Deciders and admins resolve booking conflicts */
+    public function canDecide(): bool
+    {
+        return $this->is_active && ($this->is_decider || $this->is_admin);
     }
 
     public function canAccessPanel(Panel $panel): bool

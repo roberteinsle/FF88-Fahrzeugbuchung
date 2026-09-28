@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
+use App\Services\BookingService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -96,6 +97,20 @@ class BookingResource extends Resource
                     ->label('Zweck')
                     ->limit(40),
 
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        Booking::STATUS_PENDING => 'Wartet auf Entscheidung',
+                        Booking::STATUS_REJECTED => 'Abgelehnt',
+                        default => 'Bestätigt',
+                    })
+                    ->color(fn (string $state) => match ($state) {
+                        Booking::STATUS_PENDING => 'warning',
+                        Booking::STATUS_REJECTED => 'gray',
+                        default => 'success',
+                    }),
+
                 Tables\Columns\IconColumn::make('cancelled_at')
                     ->label('Storniert')
                     ->boolean()
@@ -106,6 +121,14 @@ class BookingResource extends Resource
                 Tables\Filters\SelectFilter::make('vehicle_id')
                     ->label('Fahrzeug')
                     ->relationship('vehicle', 'name'),
+
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        Booking::STATUS_CONFIRMED => 'Bestätigt',
+                        Booking::STATUS_PENDING => 'Wartet auf Entscheidung',
+                        Booking::STATUS_REJECTED => 'Abgelehnt',
+                    ]),
 
                 Tables\Filters\TernaryFilter::make('cancelled')
                     ->label('Storniert')
@@ -127,7 +150,8 @@ class BookingResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Buchung stornieren?')
                     ->visible(fn (Booking $record) => ! $record->isCancelled())
-                    ->action(fn (Booking $record) => $record->update(['cancelled_at' => now()])),
+                    // Via the service so a pending request also closes its decision
+                    ->action(fn (Booking $record) => app(BookingService::class)->cancel($record)),
             ]);
     }
 

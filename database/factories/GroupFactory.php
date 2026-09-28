@@ -14,13 +14,7 @@ class GroupFactory extends Factory
     {
         return [
             'name' => fake()->words(2, true),
-            'receives_escalations' => false,
             'sort_order' => fake()->numberBetween(1, 100),
         ];
-    }
-
-    public function escalation(): static
-    {
-        return $this->state(['receives_escalations' => true]);
     }
 }

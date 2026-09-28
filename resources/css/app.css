@@ -54,6 +54,13 @@
     color: var(--color-fw-grey-mid);
 }
 
+/* Conflict requests waiting for a decision: striped and faded */
+.fc .fc-event-pending {
+    opacity: 0.7;
+    background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgba(255, 255, 255, 0.35) 6px 12px);
+    border-style: dashed !important;
+}
+
 /* FullCalendar mobile: title on its own row, buttons in one row below */
 @media (max-width: 639px) {
     .fc .fc-header-toolbar {

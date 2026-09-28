@@ -87,6 +87,10 @@ class BookingService
     public function cancel(Booking $booking): void
     {
         $booking->update(['cancelled_at' => now()]);
+
+        if ($booking->isPending() && $booking->decision) {
+            app(DecisionService::class)->withdraw($booking->decision);
+        }
     }
 
     private function findAlternatives(int $excludeVehicleId, Carbon $startsAt, Carbon $endsAt): Collection

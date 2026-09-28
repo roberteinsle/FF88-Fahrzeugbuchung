@@ -5,11 +5,19 @@ namespace App\Models;
 use Database\Factories\BookingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends \Illuminate\Database\Eloquent\Model
 {
     /** @use HasFactory<BookingFactory> */
     use HasFactory;
+
+    public const STATUS_CONFIRMED = 'confirmed';
+
+    /** Overlaps a confirmed booking and waits for a decider */
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
         'vehicle_id',
@@ -20,6 +28,7 @@ class Booking extends \Illuminate\Database\Eloquent\Model
         'purpose',
         'destination',
         'notes',
+        'status',
         'cancelled_at',
     ];
 
@@ -47,14 +56,38 @@ class Booking extends \Illuminate\Database\Eloquent\Model
         return $this->belongsTo(Group::class);
     }
 
+    /** The decision this booking requested (only for conflict requests) */
+    public function decision(): HasOne
+    {
+        return $this->hasOne(BookingDecision::class);
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
     public function isCancelled(): bool
     {
         return $this->cancelled_at !== null;
     }
 
+    /** Confirmed and not cancelled – these block the vehicle */
     public function scopeActive($query)
     {
-        return $query->whereNull('cancelled_at');
+        return $query->whereNull('cancelled_at')->where('status', self::STATUS_CONFIRMED);
+    }
+
+    /** Shown in the calendar: confirmed bookings plus open conflict requests */
+    public function scopeVisible($query)
+    {
+        return $query->whereNull('cancelled_at')
+            ->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_PENDING]);
     }
 
     public function scopeUpcoming($query)

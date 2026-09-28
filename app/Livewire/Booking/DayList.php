@@ -27,7 +27,7 @@ class DayList extends Component
         $day = Carbon::parse($this->date, 'Europe/Berlin');
 
         $bookings = Booking::with(['vehicle', 'user', 'group'])
-            ->active()
+            ->visible()
             ->where('starts_at', '<', $day->copy()->endOfDay()->utc())
             ->where('ends_at', '>', $day->copy()->startOfDay()->utc())
             ->orderBy('starts_at')

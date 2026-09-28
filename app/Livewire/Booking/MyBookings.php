@@ -45,9 +45,9 @@ class MyBookings extends Component
             ->orderBy('starts_at', $this->filter === 'past' ? 'desc' : 'asc');
 
         $query = match ($this->filter) {
-            'past' => $query->whereNull('cancelled_at')->where('ends_at', '<', now()),
-            'cancelled' => $query->whereNotNull('cancelled_at'),
-            default => $query->whereNull('cancelled_at')->where('ends_at', '>=', now()),
+            'past' => $query->visible()->where('ends_at', '<', now()),
+            'cancelled' => $query->where(fn ($q) => $q->whereNotNull('cancelled_at')->orWhere('status', Booking::STATUS_REJECTED)),
+            default => $query->visible()->where('ends_at', '>=', now()),
         };
 
         return view('livewire.booking.my-bookings', [

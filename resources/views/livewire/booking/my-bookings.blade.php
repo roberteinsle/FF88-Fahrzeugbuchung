@@ -42,6 +42,11 @@
                             @if($booking->group)
                             <span class="text-xs text-gray-500">{{ $booking->group->name }}</span>
                             @endif
+                            @if($booking->isPending())
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Wartet auf Entscheidung</span>
+                            @elseif($booking->isRejected())
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Abgelehnt</span>
+                            @endif
                         </div>
                         <p class="mt-1 text-sm font-semibold text-gray-900">{{ $booking->purpose }}</p>
                         @if($booking->destination)

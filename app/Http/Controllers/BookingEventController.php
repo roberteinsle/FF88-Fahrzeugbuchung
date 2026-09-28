@@ -22,7 +22,7 @@ class BookingEventController extends Controller
         $vehicleIds = $request->query('vehicles', []);
 
         $query = Booking::with(['vehicle', 'user'])
-            ->active()
+            ->visible()
             ->where('starts_at', '<', $end)
             ->where('ends_at', '>', $start);
 
@@ -33,10 +33,12 @@ class BookingEventController extends Controller
         $events = $query->get()->map(function (Booking $booking) {
             return [
                 'id' => $booking->id,
-                'title' => $booking->vehicle->displayName() . ' – ' . $booking->purpose,
+                'title' => ($booking->isPending() ? 'Angefragt: ' : '')
+                    . $booking->vehicle->displayName() . ' – ' . $booking->purpose,
                 'start' => $booking->starts_at->toIso8601String(),
                 'end' => $booking->ends_at->toIso8601String(),
                 'color' => $booking->vehicle->color,
+                'classNames' => $booking->isPending() ? ['fc-event-pending'] : [],
                 'extendedProps' => [
                     'bookingId' => $booking->id,
                     'vehicleId' => $booking->vehicle_id,
@@ -45,6 +47,7 @@ class BookingEventController extends Controller
                     'userName' => $booking->user->name,
                     'purpose' => $booking->purpose,
                     'destination' => $booking->destination,
+                    'status' => $booking->status,
                 ],
             ];
         });

@@ -24,7 +24,8 @@ class BookingPolicy
 
     public function update(User $user, Booking $booking): bool
     {
-        if ($booking->isCancelled()) {
+        // Conflict requests are decided, not edited
+        if ($booking->isCancelled() || $booking->isPending() || $booking->isRejected()) {
             return false;
         }
 
@@ -38,7 +39,7 @@ class BookingPolicy
 
     public function cancel(User $user, Booking $booking): bool
     {
-        if ($booking->isCancelled()) {
+        if ($booking->isCancelled() || $booking->isRejected()) {
             return false;
         }
 

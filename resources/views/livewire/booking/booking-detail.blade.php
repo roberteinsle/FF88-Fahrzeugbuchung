@@ -32,6 +32,10 @@
                     <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                         Storniert
                     </span>
+                    @elseif($booking->isPending())
+                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        Wartet auf Entscheidung
+                    </span>
                     @endif
                 </div>
                 <button
@@ -100,6 +104,13 @@
                 </div>
                 @endif
 
+                @if($booking->isPending() && $booking->decision && auth()->user()->canDecide())
+                <a href="{{ route('decisions.show', $booking->decision) }}"
+                   class="block text-center py-2 px-4 rounded-xl bg-fw-red hover:bg-fw-red-dark text-sm font-semibold text-white">
+                    Zur Entscheidung
+                </a>
+                @endif
+
                 {{-- Actions --}}
                 @if(!$booking->isCancelled())
                 <div class="flex gap-2 pt-2">
@@ -127,7 +138,7 @@
                         wire:click="$set('confirmCancel', true)"
                         class="flex-1 py-2 px-4 rounded-xl border border-red-200 text-sm font-medium text-fw-red hover:bg-red-50 transition-colors"
                     >
-                        Stornieren
+                        {{ $booking->isPending() ? 'Anfrage zurückziehen' : 'Stornieren' }}
                     </button>
                     @endif
                     @endif

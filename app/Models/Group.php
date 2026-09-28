@@ -13,14 +13,12 @@ class Group extends \Illuminate\Database\Eloquent\Model
 
     protected $fillable = [
         'name',
-        'receives_escalations',
         'sort_order',
     ];
 
     protected function casts(): array
     {
         return [
-            'receives_escalations' => 'boolean',
             'sort_order' => 'integer',
         ];
     }
@@ -28,10 +26,5 @@ class Group extends \Illuminate\Database\Eloquent\Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
-    }
-
-    public function scopeEscalation($query)
-    {
-        return $query->where('receives_escalations', true);
     }
 }

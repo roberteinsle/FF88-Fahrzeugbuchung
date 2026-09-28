@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BookingEventController;
+use App\Models\BookingDecision;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect
@@ -30,6 +31,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/calendar', fn () => view('pages.calendar'))->name('calendar');
     Route::get('/my-bookings', fn () => view('pages.my-bookings'))->name('my-bookings');
     Route::get('/profile', fn () => view('pages.profile'))->name('profile');
+
+    // Conflict decisions (deciders and admins)
+    Route::middleware('can:decide-bookings')->group(function () {
+        Route::get('/decisions', fn () => view('pages.decisions.index'))->name('decisions.index');
+        Route::get('/decisions/{decision}', fn (BookingDecision $decision) => view('pages.decisions.show', ['decision' => $decision]))
+            ->name('decisions.show');
+    });
 
     // FullCalendar JSON events feed
     Route::get('/bookings/events', [BookingEventController::class, 'index'])->name('bookings.events');

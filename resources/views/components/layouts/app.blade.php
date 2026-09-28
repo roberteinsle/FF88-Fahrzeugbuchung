@@ -9,6 +9,7 @@
     @livewireStyles
 </head>
 <body class="h-full">
+    @php($openDecisions = auth()->user()?->canDecide() ? \App\Models\BookingDecision::pending()->count() : 0)
     <div class="min-h-full flex flex-col">
         {{-- Top Header (only on desktop) --}}
         <header class="hidden sm:block bg-fw-navy text-white shadow-sm">
@@ -20,6 +21,14 @@
                     </div>
                     @auth
                     <nav class="flex items-center gap-6 text-sm">
+                        @if($openDecisions > 0)
+                        <a href="{{ route('decisions.index') }}"
+                           class="px-3 py-1.5 rounded-lg bg-fw-red hover:bg-fw-red-dark font-semibold">
+                            Entscheidung ({{ $openDecisions }})
+                        </a>
+                        @elseif(auth()->user()->canDecide())
+                        <a href="{{ route('decisions.index') }}" class="hover:text-fw-grey-light {{ request()->routeIs('decisions.*') ? 'font-semibold' : '' }}">Entscheidungen</a>
+                        @endif
                         <a href="{{ route('calendar') }}" class="hover:text-fw-grey-light {{ request()->routeIs('calendar') ? 'font-semibold' : '' }}">Kalender</a>
                         <a href="{{ route('my-bookings') }}" class="hover:text-fw-grey-light {{ request()->routeIs('my-bookings') ? 'font-semibold' : '' }}">Meine Buchungen</a>
                         <a href="{{ route('profile') }}" class="hover:text-fw-grey-light {{ request()->routeIs('profile') ? 'font-semibold' : '' }}">Profil</a>
@@ -31,6 +40,15 @@
                 </div>
             </div>
         </header>
+
+        {{-- Mobile: open decisions banner (the desktop header is hidden on phones) --}}
+        @if($openDecisions > 0)
+        <a href="{{ route('decisions.index') }}"
+           class="sm:hidden flex items-center justify-between bg-fw-red text-white px-4 py-2.5 text-sm font-semibold">
+            <span>Entscheidung ({{ $openDecisions }})</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+        @endif
 
         {{-- Main content --}}
         <main class="flex-1 pb-20 sm:pb-0 px-4 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto w-full">

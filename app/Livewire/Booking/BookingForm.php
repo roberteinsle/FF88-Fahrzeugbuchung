@@ -5,6 +5,7 @@ namespace App\Livewire\Booking;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\BookingService;
+use App\Services\DecisionService;
 use Carbon\Carbon;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -26,6 +27,9 @@ class BookingForm extends Component
     public string $notes = '';
 
     public ?int $groupId = null;
+
+    /** Why the requester needs the vehicle despite the conflict (conflict requests only) */
+    public string $reason = '';
 
     public bool $show = false;
 
@@ -49,7 +53,7 @@ class BookingForm extends Component
     #[On('open-booking-form')]
     public function open(?string $date = null, ?int $vehicleId = null): void
     {
-        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'bookingId']);
+        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'bookingId', 'reason']);
         $this->available = true;
 
         if ($date) {
@@ -72,7 +76,7 @@ class BookingForm extends Component
     #[On('open-edit-booking')]
     public function openForEdit(int $bookingId): void
     {
-        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives']);
+        $this->reset(['purpose', 'destination', 'notes', 'groupId', 'conflict', 'alternatives', 'reason']);
         $this->available = true;
         $this->loadBooking($bookingId);
         $this->show = true;
@@ -129,7 +133,7 @@ class BookingForm extends Component
             ->toArray();
     }
 
-    public function save(BookingService $service): void
+    public function save(BookingService $service, DecisionService $decisions): void
     {
         $this->validate([
             'vehicleId' => ['required', 'integer', 'exists:vehicles,id'],
@@ -153,30 +157,51 @@ class BookingForm extends Component
             return;
         }
 
+        $data = [
+            'vehicle_id' => $this->vehicleId,
+            'group_id' => $this->groupId,
+            'starts_at' => $starts,
+            'ends_at' => $ends,
+            'purpose' => $this->purpose,
+            'destination' => $this->destination ?: null,
+            'notes' => $this->notes ?: null,
+        ];
+
+        // New booking that overlaps a confirmed one: ask the deciders instead
+        if (! $this->bookingId) {
+            $this->checkAvailability();
+
+            if (! $this->available) {
+                $this->authorize('create', Booking::class);
+                $this->validate(
+                    ['reason' => ['required', 'string', 'max:2000']],
+                    ['reason.required' => 'Bitte begründe, warum du das Fahrzeug trotzdem brauchst.'],
+                );
+
+                try {
+                    $decisions->request($data, auth()->user(), $this->reason);
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    foreach ($e->errors() as $key => $messages) {
+                        $this->addError($key, $messages[0]);
+                    }
+                    return;
+                }
+
+                session()->flash('success', 'Anfrage gesendet. Die Wehrführung entscheidet – das Ergebnis bekommst du per E-Mail.');
+                $this->redirectRoute('calendar');
+
+                return;
+            }
+        }
+
         try {
             if ($this->bookingId) {
                 $booking = Booking::findOrFail($this->bookingId);
                 $this->authorize('update', $booking);
-                $service->update($booking, [
-                    'vehicle_id' => $this->vehicleId,
-                    'group_id' => $this->groupId,
-                    'starts_at' => $starts,
-                    'ends_at' => $ends,
-                    'purpose' => $this->purpose,
-                    'destination' => $this->destination ?: null,
-                    'notes' => $this->notes ?: null,
-                ]);
+                $service->update($booking, $data);
             } else {
                 $this->authorize('create', Booking::class);
-                $service->create([
-                    'vehicle_id' => $this->vehicleId,
-                    'group_id' => $this->groupId,
-                    'starts_at' => $starts,
-                    'ends_at' => $ends,
-                    'purpose' => $this->purpose,
-                    'destination' => $this->destination ?: null,
-                    'notes' => $this->notes ?: null,
-                ], auth()->id());
+                $service->create($data, auth()->id());
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             foreach ($e->errors() as $key => $messages) {

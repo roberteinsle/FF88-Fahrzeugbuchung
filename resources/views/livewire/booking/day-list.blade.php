@@ -62,7 +62,10 @@
                             </span>
                         </div>
                         {{-- Purpose --}}
-                        <p class="mt-1 text-sm font-medium text-gray-900 truncate">{{ $booking->purpose }}</p>
+                        <p class="mt-1 text-sm font-medium text-gray-900 truncate">
+                            @if($booking->isPending())<span class="mr-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-medium">Angefragt</span>@endif
+                            {{ $booking->purpose }}
+                        </p>
                         <p class="text-xs text-gray-500">{{ $booking->user->name }}</p>
                     </div>
                 </button>
