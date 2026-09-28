@@ -33,7 +33,7 @@
                         @endif
                         <a href="{{ route('calendar') }}" class="hover:text-fw-grey-light {{ request()->routeIs('calendar') ? 'font-semibold' : '' }}">Kalender</a>
                         <a href="{{ route('my-bookings') }}" class="hover:text-fw-grey-light {{ request()->routeIs('my-bookings') ? 'font-semibold' : '' }}">Meine Buchungen</a>
-                        <a href="{{ route('profile') }}" class="hover:text-fw-grey-light {{ request()->routeIs('profile') ? 'font-semibold' : '' }}">Profil @if($unreadFeedback)<span class="ml-1 inline-block w-2 h-2 rounded-full bg-fw-red align-middle" title="Neue Antwort auf dein Feedback"></span>@endif</a>
+                        <a href="{{ route('profile') }}" class="inline-flex items-center gap-2 hover:text-fw-grey-light {{ request()->routeIs('profile') ? 'font-semibold' : '' }}"><x-avatar :user="auth()->user()" size="h-7 w-7" text="text-[10px]" />Profil @if($unreadFeedback)<span class="ml-1 inline-block w-2 h-2 rounded-full bg-fw-red align-middle" title="Neue Antwort auf dein Feedback"></span>@endif</a>
                         @if(auth()->user()->is_admin)
                         <a href="{{ route('filament.admin.pages.dashboard') }}" class="hover:text-fw-grey-light">Admin</a>
                         @endif

@@ -14,6 +14,8 @@
         {{-- Profile card --}}
         <div class="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
 
+            <livewire:profile.avatar-upload />
+
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Name</p>
                 <p class="mt-1 text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>

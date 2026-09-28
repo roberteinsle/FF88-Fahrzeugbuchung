@@ -33,7 +33,7 @@ Entscheider und Administratoren werden im Admin-Bereich pro Benutzer per Häkche
 
 ### Buchen
 
-1. Über den Plus-Button oder einen Klick auf einen Tag öffnet sich das Buchungsformular mit Fahrzeug, Von/Bis, Zweck, Ziel, Gruppe und Notizen.
+1. Über den Plus-Button oder einen Klick auf einen Tag öffnet sich das Buchungsformular mit Fahrzeug, Von/Bis, Zweck, Ziel, Gruppe und Notizen. Verschiebt man den Start, wandert das Ende mit, die Dauer bleibt gleich. Als Gruppe stehen alle Gruppen zur Wahl, nicht nur die eigenen.
 2. Beim Ändern von Fahrzeug oder Zeitraum prüft die App sofort die Verfügbarkeit. Ist das Fahrzeug belegt, zeigt sie die kollidierende Buchung und freie Alternativfahrzeuge.
 3. Doppelbuchungen verhindert zusätzlich die Datenbank (PostgreSQL-Exclusion-Constraint). Buchungen, die direkt aneinander anschließen (bis 14:00 / ab 14:00), sind erlaubt.
 4. **Admins** wählen im Feld „Gebucht für“ per Suche (Name oder E-Mail) eine andere Person als Besitzer. Beim Bearbeiten lässt sich der Besitzer so auch tauschen.
@@ -56,6 +56,11 @@ Ist ein Fahrzeug bereits gebucht, kann man trotzdem eine **Entscheidung anfragen
 6. **Automatische Reaktivierung:** Wird die Buchung, die Vorrang bekam, storniert, gelöscht oder so verschoben, dass sie nicht mehr kollidiert, wird die unterlegene Buchung automatisch wieder aktiv. Das gilt in beide Richtungen, sofern die unterlegene Buchung noch in der Zukunft liegt und ihr Zeitraum frei ist. Alle Beteiligten bekommen eine Mail.
 7. **Zurückziehen:** Wer die eigene offene Anfrage storniert, zieht sie zurück. Die Entscheider werden informiert.
 8. **Dokumentation:** Jede Entscheidung hat einen Verlauf mit Anfrage, Entscheidung, Änderungen und automatischen Reaktivierungen, jeweils mit Person, Zeitpunkt und Anmerkung. Unter „Entscheidungen“ stehen offene und erledigte Fälle.
+
+### Profil
+
+- **Profilbild:** hochladen, ändern oder entfernen. Das Bild wird mittig quadratisch zugeschnitten, auf 256 px verkleinert und als WebP in der Datenbank gespeichert. Ein eigener Dateispeicher ist deshalb nicht nötig. Ohne Bild erscheinen die Initialen. Angezeigt wird es im Profil, in der Kopfzeile und in den Buchungsdetails.
+- **Einstellungen:** Standardansicht des Kalenders.
 
 ### Feedback
 

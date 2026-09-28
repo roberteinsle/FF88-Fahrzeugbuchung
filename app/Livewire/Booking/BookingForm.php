@@ -3,6 +3,7 @@
 namespace App\Livewire\Booking;
 
 use App\Models\Booking;
+use App\Models\Group;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\BookingService;
@@ -272,7 +273,8 @@ class BookingForm extends Component
     public function render()
     {
         $vehicles = Vehicle::active()->get();
-        $groups = auth()->user()?->groups ?? collect();
+        // Any group, not only the booker's own – e.g. a member driving for the Musikzug
+        $groups = Group::orderBy('sort_order')->orderBy('name')->get();
 
         $isAdmin = (bool) auth()->user()?->is_admin;
         $term = trim($this->ownerSearch);

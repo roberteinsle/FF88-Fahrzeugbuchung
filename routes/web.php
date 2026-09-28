@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BookingEventController;
 use App\Models\BookingDecision;
 use App\Models\FeedbackThread;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect
@@ -62,6 +63,16 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/decisions/{decision}', fn (BookingDecision $decision) => view('pages.decisions.show', ['decision' => $decision]))
             ->name('decisions.show');
     });
+
+    // Avatar images (versioned URL, cached by the browser)
+    Route::get('/avatars/{user}', function (User $user) {
+        $avatar = $user->avatar ?? abort(404);
+
+        return response(base64_decode($avatar->data), 200, [
+            'Content-Type' => $avatar->mime,
+            'Cache-Control' => 'private, max-age=31536000, immutable',
+        ]);
+    })->name('avatars.show');
 
     // FullCalendar JSON events feed
     Route::get('/bookings/events', [BookingEventController::class, 'index'])->name('bookings.events');

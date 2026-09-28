@@ -8,9 +8,9 @@ ENV AUTORUN_ENABLED=true \
     LOG_CHANNEL=stderr \
     PHP_OPCACHE_ENABLE=1
 
-# Install Node.js (LTS) and intl PHP extension
+# Install Node.js (LTS) and PHP extensions (intl; gd + exif for avatar resizing)
 RUN apk add --no-cache nodejs npm && \
-    install-php-extensions intl
+    install-php-extensions intl gd exif
 
 WORKDIR /var/www/html
 
