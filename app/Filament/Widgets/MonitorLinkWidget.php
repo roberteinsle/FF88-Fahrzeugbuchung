@@ -8,7 +8,7 @@ class MonitorLinkWidget extends Widget
 {
     protected static string $view = 'filament.widgets.monitor-link';
 
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';
 
