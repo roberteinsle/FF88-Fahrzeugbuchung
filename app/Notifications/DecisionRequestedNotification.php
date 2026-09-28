@@ -23,8 +23,12 @@ class DecisionRequestedNotification extends Notification
             ->subject('Entscheidung nötig: '.$request->vehicle->name.' am '.BookingSummary::day($request))
             ->greeting('Hallo '.$notifiable->name.',')
             ->line('für ein Fahrzeug liegt ein Buchungskonflikt vor. Bitte entscheide, wer das Fahrzeug bekommt.')
-            ->line('**Anfrage:** '.BookingSummary::line($request))
+            ->line('**'.($this->decision->replacedBooking ? 'Änderungsanfrage' : 'Anfrage').':** '.BookingSummary::line($request))
             ->line('**Begründung:** '.$this->decision->reason);
+
+        if ($this->decision->replacedBooking) {
+            $mail->line('**Bisherige Buchung (wird bei Genehmigung ersetzt):** '.BookingSummary::line($this->decision->replacedBooking));
+        }
 
         foreach ($this->decision->conflictingBookings() as $existing) {
             $mail->line('**Bestehende Buchung:** '.BookingSummary::line($existing));

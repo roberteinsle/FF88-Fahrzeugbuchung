@@ -21,6 +21,7 @@ class BookingDecision extends Model
 
     protected $fillable = [
         'booking_id',
+        'replaces_booking_id',
         'conflicting_booking_ids',
         'reason',
         'status',
@@ -43,6 +44,12 @@ class BookingDecision extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    /** The booking this request would replace (change requests only) */
+    public function replacedBooking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class, 'replaces_booking_id');
     }
 
     public function decider(): BelongsTo

@@ -39,7 +39,7 @@ class DecisionDetail extends Component
 
     public function render()
     {
-        $this->decision->loadMissing(['booking.vehicle', 'booking.user', 'booking.group', 'decider']);
+        $this->decision->loadMissing(['booking.vehicle', 'booking.user', 'booking.group', 'replacedBooking.vehicle', 'replacedBooking.user', 'decider']);
 
         return view('livewire.decisions.decision-detail', [
             'request' => $this->decision->booking,

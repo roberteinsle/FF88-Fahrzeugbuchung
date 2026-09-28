@@ -19,11 +19,14 @@ class DecisionService
     /**
      * Store a booking that overlaps confirmed bookings as a pending request
      * and ask the deciders to resolve the conflict.
+     *
+     * With $replaces the request is a change of that booking: it stays untouched
+     * until the decision and is cancelled when the change is approved.
      */
-    public function request(array $data, User $requester, string $reason): BookingDecision
+    public function request(array $data, User $requester, string $reason, ?Booking $replaces = null): BookingDecision
     {
-        $decision = DB::transaction(function () use ($data, $requester, $reason) {
-            $conflicts = $this->conflictsFor($data['vehicle_id'], $data['starts_at'], $data['ends_at']);
+        $decision = DB::transaction(function () use ($data, $requester, $reason, $replaces) {
+            $conflicts = $this->conflictsFor($data['vehicle_id'], $data['starts_at'], $data['ends_at'], $replaces?->id);
 
             if ($conflicts->isEmpty()) {
                 throw ValidationException::withMessages([
@@ -45,6 +48,7 @@ class DecisionService
 
             return BookingDecision::create([
                 'booking_id' => $booking->id,
+                'replaces_booking_id' => $replaces?->id,
                 'conflicting_booking_ids' => $conflicts->pluck('id')->all(),
                 'reason' => $reason,
                 'notified_user_ids' => $this->deciders()->pluck('id')->all(),
@@ -75,8 +79,11 @@ class DecisionService
 
             if ($approve) {
                 // Re-check: bookings may have been added or cancelled since the request
-                $conflicts = $this->conflictsFor($request->vehicle_id, $request->starts_at, $request->ends_at);
+                $conflicts = $this->conflictsFor($request->vehicle_id, $request->starts_at, $request->ends_at, $locked->replaces_booking_id);
                 $conflicts->each->update(['cancelled_at' => now()]);
+                if ($locked->replacedBooking && ! $locked->replacedBooking->isCancelled()) {
+                    $locked->replacedBooking->update(['cancelled_at' => now()]);
+                }
                 $request->update(['status' => Booking::STATUS_CONFIRMED]);
                 $locked->conflicting_booking_ids = $conflicts->pluck('id')->all();
             } else {
@@ -129,12 +136,13 @@ class DecisionService
         return $deciders->isNotEmpty() ? $deciders : User::active()->where('is_admin', true)->get();
     }
 
-    private function conflictsFor(int $vehicleId, $startsAt, $endsAt): Collection
+    private function conflictsFor(int $vehicleId, $startsAt, $endsAt, ?int $excludeBookingId = null): Collection
     {
         return Booking::active()
             ->where('vehicle_id', $vehicleId)
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
+            ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId))
             ->get();
     }
 

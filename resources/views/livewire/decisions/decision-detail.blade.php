@@ -8,11 +8,15 @@
         @endif
     </div>
 
-    <x-booking-card :booking="$request" label="Anfrage" :highlight="$decision->isPending()">
+    <x-booking-card :booking="$request" :label="$decision->replacedBooking ? 'Änderungsanfrage' : 'Anfrage'" :highlight="$decision->isPending()">
         <div class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
             <span class="font-medium">Begründung:</span> {{ $decision->reason }}
         </div>
     </x-booking-card>
+
+    @if($decision->replacedBooking)
+    <x-booking-card :booking="$decision->replacedBooking" label="Bisherige Buchung – wird bei Genehmigung ersetzt" />
+    @endif
 
     @foreach($conflicts as $existing)
     <x-booking-card :booking="$existing" label="Bestehende Buchung" />

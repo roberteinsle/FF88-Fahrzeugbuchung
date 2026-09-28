@@ -71,12 +71,12 @@
                     </div>
                     @endif
 
-                    @if(!$bookingId)
                     <div class="mt-3 pt-3 border-t border-red-200">
                         <p class="font-medium text-red-800">Fahrzeug trotzdem benötigt?</p>
                         <p class="mt-0.5 text-red-700">
                             Stelle eine Anfrage. Die Wehrführung entscheidet, wer das Fahrzeug bekommt –
                             beide Seiten werden per E-Mail informiert.
+                            @if($bookingId) Bis zur Entscheidung bleibt deine bisherige Buchung unverändert bestehen. @endif
                         </p>
                         <label for="reason" class="block mt-2 text-sm font-medium text-red-800">Begründung *</label>
                         <textarea
@@ -88,9 +88,6 @@
                         ></textarea>
                         @error('reason') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
                     </div>
-                    @else
-                    <p class="mt-2 text-red-700">Wähle einen anderen Zeitraum oder ein anderes Fahrzeug.</p>
-                    @endif
                 </div>
                 @endif
 
@@ -175,12 +172,11 @@
 
                 {{-- Submit --}}
                 <div class="mt-auto pt-3 border-t border-gray-100">
-                    @php($requestMode = !$available && $conflict !== null && !$bookingId)
+                    @php($requestMode = !$available && $conflict !== null)
                     <button
                         type="submit"
                         class="w-full py-2.5 px-4 rounded-xl font-semibold text-white text-sm transition-colors
                                {{ $available || $requestMode ? 'bg-fw-red hover:bg-fw-red-dark' : 'bg-gray-400 cursor-not-allowed' }}"
-                        @disabled(!$available && $conflict !== null && $bookingId)
                     >
                         <span wire:loading.remove wire:target="save">
                             {{ $requestMode ? 'Entscheidung anfragen' : ($bookingId ? 'Speichern' : 'Buchen') }}

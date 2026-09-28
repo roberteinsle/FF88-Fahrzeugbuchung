@@ -167,31 +167,34 @@ class BookingForm extends Component
             'notes' => $this->notes ?: null,
         ];
 
-        // New booking that overlaps a confirmed one: ask the deciders instead
-        if (! $this->bookingId) {
-            $this->checkAvailability();
+        // Overlaps a confirmed booking: ask the deciders instead. A change of an
+        // existing booking keeps the original until the decision.
+        $this->checkAvailability();
 
-            if (! $this->available) {
-                $this->authorize('create', Booking::class);
-                $this->validate(
-                    ['reason' => ['required', 'string', 'max:2000']],
-                    ['reason.required' => 'Bitte begründe, warum du das Fahrzeug trotzdem brauchst.'],
-                );
+        if (! $this->available) {
+            $replaces = $this->bookingId ? Booking::findOrFail($this->bookingId) : null;
+            $replaces
+                ? $this->authorize('update', $replaces)
+                : $this->authorize('create', Booking::class);
 
-                try {
-                    $decisions->request($data, auth()->user(), $this->reason);
-                } catch (\Illuminate\Validation\ValidationException $e) {
-                    foreach ($e->errors() as $key => $messages) {
-                        $this->addError($key, $messages[0]);
-                    }
-                    return;
+            $this->validate(
+                ['reason' => ['required', 'string', 'max:2000']],
+                ['reason.required' => 'Bitte begründe, warum du das Fahrzeug trotzdem brauchst.'],
+            );
+
+            try {
+                $decisions->request($data, auth()->user(), $this->reason, $replaces);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                foreach ($e->errors() as $key => $messages) {
+                    $this->addError($key, $messages[0]);
                 }
-
-                session()->flash('success', 'Anfrage gesendet. Die Wehrführung entscheidet – das Ergebnis bekommst du per E-Mail.');
-                $this->redirectRoute('calendar');
-
                 return;
             }
+
+            session()->flash('success', 'Anfrage gesendet. Die Wehrführung entscheidet – das Ergebnis bekommst du per E-Mail.');
+            $this->redirectRoute('calendar');
+
+            return;
         }
 
         try {

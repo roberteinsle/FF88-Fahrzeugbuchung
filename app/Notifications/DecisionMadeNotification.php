@@ -28,7 +28,12 @@ class DecisionMadeNotification extends Notification
             ->subject('Entscheidung zu '.$request->vehicle->name.' am '.BookingSummary::day($request))
             ->greeting('Hallo '.$notifiable->name.',');
 
-        if ($isRequester) {
+        if ($isRequester && $this->decision->replacedBooking) {
+            $mail->line($approved
+                ? 'deine Änderung wurde **genehmigt**. Deine Buchung gilt jetzt mit den neuen Angaben.'
+                : 'deine Änderung wurde **abgelehnt**. Deine bisherige Buchung bleibt unverändert bestehen.');
+            $mail->line('**Angefragte Änderung:** '.BookingSummary::line($request));
+        } elseif ($isRequester) {
             $mail->line($approved
                 ? 'deine Anfrage wurde **genehmigt**. Das Fahrzeug ist für dich gebucht.'
                 : 'deine Anfrage wurde **abgelehnt**. Die bestehende Buchung bleibt bestehen.');

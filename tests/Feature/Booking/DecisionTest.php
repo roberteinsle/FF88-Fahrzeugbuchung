@@ -170,3 +170,80 @@ test('pending requests show up in the calendar feed', function () {
         ->assertJsonCount(2)
         ->assertJsonFragment(['classNames' => ['fc-event-pending']]);
 });
+
+test('editing a booking into a conflict sends a change request and keeps the original', function () {
+    $mine = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'user_id' => $this->requester->id,
+        'starts_at' => Carbon::parse('2026-10-10 08:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-10 09:00', 'Europe/Berlin')->utc(),
+        'purpose' => 'Original',
+    ]);
+
+    Livewire::actingAs($this->requester)
+        ->test(BookingForm::class)
+        ->call('openForEdit', $mine->id)
+        ->set('startsAt', '2026-10-10T12:00')
+        ->set('endsAt', '2026-10-10T13:00')
+        ->assertSet('available', false)
+        ->set('reason', 'Termin verschoben')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('calendar'));
+
+    $decision = BookingDecision::sole();
+    expect($decision->replaces_booking_id)->toBe($mine->id)
+        ->and($decision->conflicting_booking_ids)->toBe([$this->existing->id])
+        ->and($mine->fresh()->isCancelled())->toBeFalse()
+        ->and($mine->fresh()->starts_at->equalTo(Carbon::parse('2026-10-10 08:00', 'Europe/Berlin')))->toBeTrue();
+    Notification::assertSentTo($this->deciderA, DecisionRequestedNotification::class);
+
+    return $decision;
+});
+
+test('approving a change request replaces the original booking', function () {
+    $mine = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'user_id' => $this->requester->id,
+        'starts_at' => Carbon::parse('2026-10-10 15:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-10 16:00', 'Europe/Berlin')->utc(),
+    ]);
+
+    $decision = app(DecisionService::class)->request([
+        'vehicle_id' => $this->vehicle->id,
+        'starts_at' => Carbon::parse('2026-10-10 13:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-10 15:30', 'Europe/Berlin')->utc(),
+        'purpose' => 'Verlängert',
+    ], $this->requester, 'Länger nötig', $mine);
+
+    // The original itself overlaps the requested slot but must not count as a conflict
+    expect($decision->conflicting_booking_ids)->toBe([$this->existing->id]);
+
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: true);
+
+    expect($mine->fresh()->isCancelled())->toBeTrue()
+        ->and($this->existing->fresh()->isCancelled())->toBeTrue()
+        ->and($decision->booking->fresh()->status)->toBe(Booking::STATUS_CONFIRMED);
+});
+
+test('rejecting a change request keeps the original booking', function () {
+    $mine = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'user_id' => $this->requester->id,
+        'starts_at' => Carbon::parse('2026-10-10 08:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-10 09:00', 'Europe/Berlin')->utc(),
+    ]);
+
+    $decision = app(DecisionService::class)->request([
+        'vehicle_id' => $this->vehicle->id,
+        'starts_at' => Carbon::parse('2026-10-10 12:00', 'Europe/Berlin')->utc(),
+        'ends_at' => Carbon::parse('2026-10-10 13:00', 'Europe/Berlin')->utc(),
+        'purpose' => 'Verschoben',
+    ], $this->requester, 'Bitte', $mine);
+
+    app(DecisionService::class)->decide($decision, $this->deciderA, approve: false);
+
+    expect($mine->fresh()->isCancelled())->toBeFalse()
+        ->and($this->existing->fresh()->isCancelled())->toBeFalse()
+        ->and($decision->booking->fresh()->status)->toBe(Booking::STATUS_REJECTED);
+});
