@@ -373,3 +373,17 @@ test('cancelling the kept booking confirms the rejected request', function () {
     expect($decision->booking->fresh()->status)->toBe(Booking::STATUS_CONFIRMED);
     Notification::assertSentTo($this->requester, BookingReactivatedNotification::class);
 });
+
+test('mobile tab bar shows decisions for deciders and admin for admins', function () {
+    $this->actingAs($this->requester)->get(route('calendar'))
+        ->assertDontSee('Entscheid.')
+        ->assertDontSee('grid-template-columns: repeat(4', false);
+
+    $this->actingAs($this->deciderA)->get(route('calendar'))
+        ->assertSee('Entscheid.')
+        ->assertSee('grid-template-columns: repeat(4', false);
+
+    $this->actingAs(User::factory()->admin()->create())->get(route('calendar'))
+        ->assertSee('Entscheid.')
+        ->assertSee('grid-template-columns: repeat(5', false);
+});

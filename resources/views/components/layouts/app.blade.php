@@ -59,8 +59,10 @@
 
         {{-- Mobile bottom tab bar --}}
         @auth
+        @php($canDecide = auth()->user()->canDecide())
+        @php($isAdmin = auth()->user()->is_admin)
         <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
-            <div class="grid grid-cols-3 h-16">
+            <div class="grid h-16" style="grid-template-columns: repeat({{ 3 + (int) $canDecide + (int) $isAdmin }}, minmax(0, 1fr));">
                 <a href="{{ route('calendar') }}"
                    class="flex flex-col items-center justify-center gap-1 text-xs {{ request()->routeIs('calendar') ? 'text-fw-red' : 'text-gray-500' }}">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -75,6 +77,18 @@
                     </svg>
                     Meine
                 </a>
+                @if($canDecide)
+                <a href="{{ route('decisions.index') }}"
+                   class="relative flex flex-col items-center justify-center gap-1 text-xs {{ request()->routeIs('decisions.*') ? 'text-fw-red' : 'text-gray-500' }}">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+                    </svg>
+                    Entscheid.
+                    @if($openDecisions > 0)
+                    <span class="absolute top-1.5 left-1/2 ml-2 min-w-4 h-4 px-1 rounded-full bg-fw-red text-white text-[10px] leading-4 text-center">{{ $openDecisions }}</span>
+                    @endif
+                </a>
+                @endif
                 <a href="{{ route('profile') }}"
                    class="flex flex-col items-center justify-center gap-1 text-xs {{ request()->routeIs('profile') ? 'text-fw-red' : 'text-gray-500' }}">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -82,6 +96,16 @@
                     </svg>
                     <span>Profil @if($unreadFeedback)<span class="ml-1 inline-block w-2 h-2 rounded-full bg-fw-red align-middle"></span>@endif</span>
                 </a>
+                @if($isAdmin)
+                <a href="{{ route('filament.admin.pages.dashboard') }}"
+                   class="flex flex-col items-center justify-center gap-1 text-xs text-gray-500">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Admin
+                </a>
+                @endif
             </div>
         </nav>
         @endauth
