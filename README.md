@@ -4,13 +4,89 @@ Web-App zur Reservierung der Fahrzeuge der **Freiwilligen Feuerwehr Braak** – 
 
 ## Funktionen
 
-- **Belegungskalender** (FullCalendar) mit Monats-, Wochen-, Tages- und Listenansicht, farbig nach Fahrzeug
-- **Buchungen anlegen, ändern und stornieren** mit Zweck, Ziel, Gruppe und Notizen
-- **Schutz vor Doppelbuchungen** direkt in der Datenbank (PostgreSQL-Exclusion-Constraint). Ist ein Fahrzeug belegt, schlägt die App freie Alternativen vor.
-- **Meine Buchungen**: Übersicht der eigenen anstehenden und vergangenen Buchungen
-- **Passwortloser Login** per Magic Link. Der Link wird erst durch einen Bestätigungsklick eingelöst, damit E-Mail-Scanner ihn nicht vorzeitig verbrauchen.
-- **Admin-Bereich** (Filament) unter `/admin` zur Verwaltung von Fahrzeugen, Benutzern, Gruppen und Buchungen
-- **Rechte**: Mitglieder bearbeiten nur ihre eigenen, zukünftigen Buchungen. Admins dürfen alle Buchungen bearbeiten, auch vergangene.
+### Rollen
+
+| Rolle          | Darf                                                                                           |
+|----------------|------------------------------------------------------------------------------------------------|
+| Mitglied       | Kalender ansehen, eigene Buchungen anlegen, ändern und stornieren, Konflikte zur Entscheidung vorlegen, Feedback senden |
+| Entscheider    | zusätzlich Buchungskonflikte entscheiden, Entscheidungen ändern und zurücknehmen                |
+| Administrator  | alles, dazu Admin-Bereich, Buchungen für andere anlegen, Besitzer tauschen, vergangene Buchungen bearbeiten |
+
+Entscheider und Administratoren werden im Admin-Bereich pro Benutzer per Häkchen festgelegt. Gibt es keinen aktiven Entscheider, übernehmen die Administratoren diese Rolle.
+
+### Anmeldung
+
+- **Passwortloser Login per Magic Link:** E-Mail-Adresse eingeben, Link aus der Mail öffnen und auf „Anmelden“ klicken. Erst dieser Klick löst den Link ein, damit E-Mail-Scanner ihn nicht vorzeitig verbrauchen.
+- Links gelten 15 Minuten und nur einmal. Anfragen sind pro Adresse und IP begrenzt. Für unbekannte Adressen erscheint dieselbe Meldung, damit sich nicht ausprobieren lässt, wer registriert ist.
+- Die Sitzung bleibt 90 Tage bestehen.
+- **Admin-Konten ohne Terminal:** Die Adressen aus `ADMIN_EMAILS` werden bei jedem Container-Start als aktive Admins angelegt.
+
+### Kalender
+
+- **Ansichten:** Woche (Standard), Monat und Liste, farbig nach Fahrzeug. Die bevorzugte Standardansicht stellt jeder unter „Profil → Einstellungen“ ein.
+- **Filter:** Über die Fahrzeug-Chips oben lassen sich Fahrzeuge ein- und ausblenden.
+- **Liste:** Fahrzeug, Zweck und Name stehen mit Icons nebeneinander. Bereits beendete Buchungen sind grau.
+- **Woche:** Fahrzeug, Zweck und Name stehen untereinander, auf dem Handy nur das Fahrzeug. Die Ansicht beginnt um 6 Uhr.
+- **Monat:** Auf dem Handy erscheinen die Buchungen als farbige Punkte. Ein Tipp auf den Tag öffnet die Tagesliste.
+- **Offene Konfliktanfragen** sind gestreift und mit „Angefragt“ markiert.
+- **Zeitzone:** Alle Zeiten werden in Europe/Berlin angezeigt, inklusive Sommer- und Winterzeit.
+
+### Buchen
+
+1. Über den Plus-Button oder einen Klick auf einen Tag öffnet sich das Buchungsformular mit Fahrzeug, Von/Bis, Zweck, Ziel, Gruppe und Notizen.
+2. Beim Ändern von Fahrzeug oder Zeitraum prüft die App sofort die Verfügbarkeit. Ist das Fahrzeug belegt, zeigt sie die kollidierende Buchung und freie Alternativfahrzeuge.
+3. Doppelbuchungen verhindert zusätzlich die Datenbank (PostgreSQL-Exclusion-Constraint). Buchungen, die direkt aneinander anschließen (bis 14:00 / ab 14:00), sind erlaubt.
+4. **Admins** wählen im Feld „Gebucht für“ per Suche (Name oder E-Mail) eine andere Person als Besitzer. Beim Bearbeiten lässt sich der Besitzer so auch tauschen.
+5. **Meine Buchungen** zeigt die eigenen Buchungen, aufgeteilt in „Kommend“, „Vergangen“ und „Storniert“, jeweils mit Bearbeiten und Stornieren.
+
+Mitglieder bearbeiten nur ihre eigenen zukünftigen Buchungen, Admins alle.
+
+### Konflikte und Entscheidungen
+
+Ist ein Fahrzeug bereits gebucht, kann man trotzdem eine **Entscheidung anfragen**.
+
+1. **Anfrage:** Das geht bei neuen Buchungen und beim Verschieben bestehender Buchungen, jeweils mit Pflicht-Begründung. Die Anfrage wird als „wartet auf Entscheidung“ gespeichert und blockiert das Fahrzeug nicht. Bei einer Änderung bleibt die bisherige Buchung bis zur Entscheidung unverändert.
+2. **Benachrichtigung:** Alle Entscheider bekommen eine Mail mit direktem Link zur Entscheidung. Solange etwas offen ist, zeigt die Navigation den roten Button **„Entscheidung (n)“**, auf dem Handy als rote Leiste.
+3. **Entscheiden:** Die Entscheidungsseite zeigt Anfrage, Begründung, die bestehende Buchung und gegebenenfalls die bisherige Buchung.
+   - **„Anfrage genehmigen“** gibt der Anfrage das Fahrzeug und storniert die kollidierenden Buchungen. Bei einer Änderung wird die bisherige Buchung ersetzt.
+   - **„Bestehende Buchung behalten“** lehnt die Anfrage ab.
+   - Eine Anmerkung ist optional. Entscheiden zwei gleichzeitig, zählt nur die erste Entscheidung.
+4. **Information:** Anfragende Person und Besitzer der bestehenden Buchungen bekommen das Ergebnis per Mail. Die übrigen Entscheider erfahren, dass bereits entschieden wurde.
+5. **Ändern oder zurücknehmen:** Eine getroffene Entscheidung kann umgedreht oder zurückgenommen werden. Beim Zurücknehmen wartet die Anfrage wieder, und stornierte Buchungen gelten wieder. Ist der Zeitraum inzwischen anderweitig belegt, lehnt die App das mit einer Meldung ab. Alle Beteiligten werden per Mail informiert.
+6. **Automatische Reaktivierung:** Wird die Buchung, die Vorrang bekam, storniert, gelöscht oder so verschoben, dass sie nicht mehr kollidiert, wird die unterlegene Buchung automatisch wieder aktiv. Das gilt in beide Richtungen, sofern die unterlegene Buchung noch in der Zukunft liegt und ihr Zeitraum frei ist. Alle Beteiligten bekommen eine Mail.
+7. **Zurückziehen:** Wer die eigene offene Anfrage storniert, zieht sie zurück. Die Entscheider werden informiert.
+8. **Dokumentation:** Jede Entscheidung hat einen Verlauf mit Anfrage, Entscheidung, Änderungen und automatischen Reaktivierungen, jeweils mit Person, Zeitpunkt und Anmerkung. Unter „Entscheidungen“ stehen offene und erledigte Fälle.
+
+### Feedback
+
+- **Mitglieder** senden unter „Profil → Feedback an die Admins“ Nachrichten mit Betreff. Die Gespräche lassen sich im Chat-Stil nachlesen und beantworten. Neue Admin-Antworten erscheinen als roter Punkt am Menüpunkt „Profil“.
+- **Admins** finden alle Gespräche im Admin-Bereich unter „Feedback“, mit Zähler für ungelesene. Dort können sie antworten und Gespräche als erledigt markieren oder wieder öffnen.
+- Jede Nachricht wird per Mail an die Gegenseite geschickt, mit direktem Link zum Gespräch.
+
+### Admin-Bereich (`/admin`)
+
+- **Fahrzeuge:** Name, Kurzname, Farbe, Reihenfolge und aktiv/inaktiv.
+- **Gruppen:** zum Beispiel Jugendfeuerwehr oder Musikzug. Mitglieder ordnen Buchungen einer Gruppe zu.
+- **Nutzer:** Häkchen für Administrator, Entscheider und aktiv. Filter nach Gruppe, Rolle und Status. Außerdem lässt sich ein Login-Link direkt versenden.
+- **Buchungen:** alle Buchungen mit Status (bestätigt, wartet auf Entscheidung, abgelehnt), Stornieren und Bearbeiten. Stornieren, Ändern und Löschen lösen dieselben Automatismen aus wie in der App.
+- **Feedback:** siehe oben.
+- **Dashboard:** anstehende Buchungen. Über „Zur App“ geht es zurück zum Kalender.
+
+### E-Mails
+
+Alle Mails sind auf Deutsch und werden sofort verschickt, ein Queue-Worker ist nicht nötig. Kann eine Mail nicht zugestellt werden, landet der Fehler im Log. Die eigentliche Aktion, etwa eine Entscheidung, bleibt trotzdem gespeichert.
+
+| Anlass                           | Empfänger                                               |
+|----------------------------------|---------------------------------------------------------|
+| Login-Link                       | die anfragende Person                                    |
+| Entscheidung nötig               | alle Entscheider (ersatzweise Admins)                    |
+| Entscheidung getroffen / geändert | anfragende Person und Besitzer der bestehenden Buchungen |
+| Bereits entschieden              | die übrigen Entscheider                                  |
+| Entscheidung zurückgenommen      | alle Beteiligten                                         |
+| Buchung automatisch reaktiviert  | alle Beteiligten                                         |
+| Anfrage zurückgezogen            | die Entscheider                                          |
+| Neues Feedback / Antwort vom Mitglied | alle Admins                                         |
+| Antwort vom Admin                | das Mitglied                                             |
 
 ## Tech-Stack
 
@@ -64,13 +140,13 @@ Die wichtigsten Variablen aus [.env.example](.env.example):
 |--------------------------|---------------------------------------------------------|
 | `APP_URL`                | Öffentliche URL. Wird für die Links in den Magic-Link-Mails verwendet. |
 | `DB_*`                   | Zugangsdaten für PostgreSQL                             |
-| `MAIL_*`                 | SMTP-Server für den Versand der Login-Links             |
+| `MAIL_*`                 | SMTP-Server für alle Mails. Für Port 465 gilt `MAIL_SCHEME=smtps`. |
 | `ADMIN_EMAILS`           | Kommagetrennte Adressen, die beim Container-Start als Admin angelegt bzw. aktiviert werden |
 | `MAGIC_LINK_TTL_MINUTES` | Gültigkeit eines Login-Links in Minuten (Standard: 15)  |
 | `SESSION_LIFETIME`       | Session-Dauer in Minuten (Standard: 90 Tage)            |
 | `LOG_CHANNEL`            | Im Docker-Image `stderr`, damit Fehler in den Container-Logs erscheinen |
 
-Login-Mails werden sofort verschickt, ein Queue-Worker ist dafür nicht nötig. Abgelaufene Login-Tokens räumt der Scheduler täglich auf (`php artisan schedule:work` bzw. ein Cronjob).
+Alle Mails werden sofort verschickt, ein Queue-Worker ist nicht nötig. Abgelaufene Login-Tokens räumt der Scheduler täglich auf (`php artisan schedule:work` bzw. ein Cronjob).
 
 ## Tests
 
@@ -96,13 +172,16 @@ Die App läuft hinter einem Reverse Proxy. Alle Proxy-Header werden vertraut, da
 
 ```
 app/
-├── Filament/         Admin-Bereich (Resources & Widgets)
+├── Console/          app:ensure-admins (Admins aus ADMIN_EMAILS)
+├── Filament/         Admin-Bereich (Fahrzeuge, Gruppen, Nutzer, Buchungen, Feedback)
 ├── Http/             Magic-Link-Controller, Kalender-Feed, Middleware
-├── Livewire/         Kalender, Buchungsformular, Meine Buchungen
-├── Models/           Booking, Vehicle, Group, User, LoginToken
+├── Livewire/         Kalender, Buchungsformular, Meine Buchungen, Entscheidungen, Feedback, Einstellungen
+├── Models/           Booking, BookingDecision, Vehicle, Group, User, FeedbackThread, FeedbackMessage, LoginToken
+├── Notifications/    alle E-Mails
 ├── Policies/         Berechtigungen für Buchungen & Fahrzeuge
-└── Services/         BookingService, MagicLinkService
+└── Services/         BookingService, DecisionService, FeedbackService, MagicLinkService
 database/
-├── migrations/       Schema inkl. Exclusion-Constraint
-└── seeders/          Fahrzeuge, Gruppen, erster Admin
+├── migrations/       Schema inkl. Exclusion-Constraint, Grunddaten (Fahrzeuge, Gruppen)
+└── seeders/          Fahrzeuge, Gruppen, erster Admin (lokal)
+docker/entrypoint.d/  Startskript, das beim Container-Start die Admins anlegt
 ```
