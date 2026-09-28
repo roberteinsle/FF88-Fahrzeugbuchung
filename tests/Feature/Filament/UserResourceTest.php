@@ -1,6 +1,9 @@
 <?php
 
+use App\Filament\Resources\UserResource\Pages\ListUsers;
+use App\Models\Group;
 use App\Models\User;
+use Livewire\Livewire;
 
 beforeEach(function () {
     $this->admin = User::factory()->admin()->create();
@@ -39,4 +42,25 @@ test('last admin cannot have admin revoked', function () {
     }
 
     expect(User::where('is_admin', true)->count())->toBeGreaterThanOrEqual(1);
+});
+
+test('admin panel links back to the app', function () {
+    $this->get('/admin')
+        ->assertSee('Zur App')
+        ->assertSee(route('calendar'), false);
+});
+
+test('user list can be filtered by group', function () {
+    $jugend = Group::factory()->create(['name' => 'Jugendfeuerwehr']);
+    $musik = Group::factory()->create(['name' => 'Musikzug']);
+
+    $inJugend = User::factory()->create();
+    $inJugend->groups()->attach($jugend);
+    $inMusik = User::factory()->create();
+    $inMusik->groups()->attach($musik);
+
+    Livewire::test(ListUsers::class)
+        ->filterTable('groups', [$jugend->id])
+        ->assertCanSeeTableRecords([$inJugend])
+        ->assertCanNotSeeTableRecords([$inMusik, $this->admin]);
 });

@@ -93,6 +93,11 @@ class UserResource extends Resource
                     ->placeholder('Noch nie'),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('groups')
+                    ->label('Gruppe')
+                    ->relationship('groups', 'name', fn ($query) => $query->orderBy('sort_order'))
+                    ->multiple()
+                    ->preload(),
                 Tables\Filters\TernaryFilter::make('is_admin')->label('Administrator'),
                 Tables\Filters\TernaryFilter::make('is_active')->label('Aktiv'),
             ])
