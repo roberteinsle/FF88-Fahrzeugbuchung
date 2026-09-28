@@ -1,10 +1,14 @@
 <?php
 
+use App\Livewire\Auth\LoginForm;
 use App\Models\LoginToken;
 use App\Models\User;
+use App\Notifications\MagicLinkNotification;
 use App\Services\MagicLinkService;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 
 beforeEach(function () {
     RateLimiter::clear('magic-link:ip:127.0.0.1');
@@ -131,4 +135,25 @@ test('rate limit blocks excessive requests per email', function () {
         ->assertRedirect(); // still redirects (no enumeration), but no token created
 
     $this->assertDatabaseCount('login_tokens', 0);
+});
+
+test('login form component sends magic link', function () {
+    Notification::fake();
+    $user = User::factory()->create();
+
+    Livewire::test(LoginForm::class)
+        ->set('email', $user->email)
+        ->call('submit')
+        ->assertHasNoErrors()
+        ->assertSet('sent', true);
+
+    Notification::assertSentTo($user, MagicLinkNotification::class);
+});
+
+test('login form component validates email', function () {
+    Livewire::test(LoginForm::class)
+        ->set('email', 'not-an-email')
+        ->call('submit')
+        ->assertHasErrors(['email' => 'email'])
+        ->assertSet('sent', false);
 });

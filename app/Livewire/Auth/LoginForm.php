@@ -4,19 +4,19 @@ namespace App\Livewire\Auth;
 
 use App\Services\MagicLinkService;
 use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class LoginForm extends Component
 {
-    #[Validate('required|email')]
     public string $email = '';
 
     public bool $sent = false;
 
     public function submit(MagicLinkService $service): void
     {
-        $this->validate([], [
+        $this->validate([
+            'email' => ['required', 'email'],
+        ], [
             'email.required' => 'Bitte gib deine E-Mail-Adresse ein.',
             'email.email' => 'Bitte gib eine gültige E-Mail-Adresse ein.',
         ]);
