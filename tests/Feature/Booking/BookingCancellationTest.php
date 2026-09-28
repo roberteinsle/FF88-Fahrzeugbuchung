@@ -1,10 +1,12 @@
 <?php
 
+use App\Livewire\Booking\BookingForm;
 use App\Models\Booking;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\BookingService;
 use Carbon\Carbon;
+use Livewire\Livewire;
 
 beforeEach(function () {
     $this->vehicle = Vehicle::factory()->create();
@@ -90,4 +92,25 @@ test('admin can edit past booking', function () {
     ], $this->owner->id);
 
     expect($this->admin->can('update', $pastBooking))->toBeTrue();
+});
+
+test('owner cannot cancel a past booking, admin can, and the form refuses the edit', function () {
+    $pastBooking = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'user_id' => $this->owner->id,
+        'starts_at' => Carbon::now()->subDays(2),
+        'ends_at' => Carbon::now()->subDays(2)->addHours(2),
+    ]);
+
+    expect($this->owner->can('cancel', $pastBooking))->toBeFalse()
+        ->and($this->admin->can('cancel', $pastBooking))->toBeTrue();
+
+    Livewire::actingAs($this->owner)
+        ->test(BookingForm::class)
+        ->call('openForEdit', $pastBooking->id)
+        ->set('purpose', 'Nachträglich geändert')
+        ->call('save')
+        ->assertForbidden();
+
+    expect($pastBooking->fresh()->purpose)->not->toBe('Nachträglich geändert');
 });

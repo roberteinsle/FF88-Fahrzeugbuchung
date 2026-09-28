@@ -26,6 +26,22 @@ Route::prefix('auth')->name('auth.')->group(function () {
 });
 
 // -----------------------------------------------------------------------
+// Station monitor: read-only, no user. Admins or the secret DISPLAY_TOKEN;
+// everyone else gets a 404 so the page doesn't reveal that it exists.
+// -----------------------------------------------------------------------
+Route::get('/monitor/{key?}', function (?string $key = null) {
+    $token = (string) config('monitor.token');
+    $validKey = $token !== '' && $key !== null && hash_equals($token, $key);
+
+    abort_unless(auth()->user()?->is_admin || $validKey, 404);
+
+    return response()
+        ->view('pages.monitor')
+        ->header('X-Robots-Tag', 'noindex, nofollow')
+        ->header('Referrer-Policy', 'no-referrer');
+})->name('monitor');
+
+// -----------------------------------------------------------------------
 // Authenticated routes
 // -----------------------------------------------------------------------
 Route::middleware(['auth', 'active'])->group(function () {

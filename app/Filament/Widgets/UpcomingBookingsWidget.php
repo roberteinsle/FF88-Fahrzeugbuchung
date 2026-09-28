@@ -13,6 +13,8 @@ class UpcomingBookingsWidget extends BaseWidget
     protected static ?string $heading = 'Kommende Buchungen (nächste 7 Tage)';
     protected int|string|array $columnSpan = 'full';
 
+    protected static ?int $sort = 4;
+
     public function table(Table $table): Table
     {
         return $table

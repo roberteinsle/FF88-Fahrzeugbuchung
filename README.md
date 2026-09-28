@@ -39,7 +39,7 @@ Entscheider und Administratoren werden im Admin-Bereich pro Benutzer per Häkche
 4. **Admins** wählen im Feld „Gebucht für“ per Suche (Name oder E-Mail) eine andere Person als Besitzer. Beim Bearbeiten lässt sich der Besitzer so auch tauschen.
 5. **Meine Buchungen** zeigt die eigenen Buchungen, aufgeteilt in „Kommend“, „Vergangen“ und „Storniert“, jeweils mit Bearbeiten und Stornieren.
 
-Mitglieder bearbeiten nur ihre eigenen zukünftigen Buchungen, Admins alle.
+Mitglieder bearbeiten und stornieren nur ihre eigenen Buchungen, und nur solange sie noch nicht begonnen haben. Vergangene Buchungen ändern oder löschen nur Admins.
 
 ### Konflikte und Entscheidungen
 
@@ -70,7 +70,17 @@ Ist ein Fahrzeug bereits gebucht, kann man trotzdem eine **Entscheidung anfragen
 - **Nutzer:** Häkchen für Administrator, Entscheider und aktiv. Filter nach Gruppe, Rolle und Status. Außerdem lässt sich ein Login-Link direkt versenden.
 - **Buchungen:** alle Buchungen mit Status (bestätigt, wartet auf Entscheidung, abgelehnt), Stornieren und Bearbeiten. Stornieren, Ändern und Löschen lösen dieselben Automatismen aus wie in der App.
 - **Feedback:** siehe oben.
-- **Dashboard:** anstehende Buchungen. Über „Zur App“ geht es zurück zum Kalender.
+- **Dashboard:** Link zum Wachen-Monitor, die Top 5 der Mitglieder mit den meisten Buchungen, die Fahrzeuge sortiert nach Anzahl Buchungen und die anstehenden Buchungen. Über „Zur App“ geht es zurück zum Kalender.
+
+### Wachen-Monitor
+
+Nur-Lese-Ansicht für den Bildschirm in der Wache im Stil von Divera. Sie aktualisiert sich jede Minute von selbst und lädt alle 6 Stunden komplett neu.
+
+- **Oben:** Uhr, Datum und Zähler für freie, bald belegte und belegte Fahrzeuge.
+- **Fahrzeugkacheln:** Grün heißt frei (mit nächster Buchung). Gelb heißt ab einer Uhrzeit innerhalb der nächsten 2 Stunden gebucht. Rot heißt unterwegs bis …, jeweils mit Zweck und Name.
+- **Liste:** die nächsten Buchungen der kommenden 7 Tage, offene Anfragen mit „Angefragt“ markiert.
+- **Datenschutz:** Namen werden verkürzt angezeigt („Robert E.“). Es gibt keinerlei Bearbeitungsfunktionen, und die Seite ist keinem Benutzer zugeordnet.
+- **Zugriff:** Der Wachen-PC öffnet `/monitor/<DISPLAY_TOKEN>` ohne Login. Ohne oder mit falschem Schlüssel antwortet die Seite mit 404. Admins öffnen `/monitor` direkt. Den fertigen Link zeigt das Admin-Dashboard. Wird `DISPLAY_TOKEN` in Coolify geändert, ist der alte Link ungültig.
 
 ### E-Mails
 
@@ -142,6 +152,7 @@ Die wichtigsten Variablen aus [.env.example](.env.example):
 | `DB_*`                   | Zugangsdaten für PostgreSQL                             |
 | `MAIL_*`                 | SMTP-Server für alle Mails. Für Port 465 gilt `MAIL_SCHEME=smtps`. |
 | `ADMIN_EMAILS`           | Kommagetrennte Adressen, die beim Container-Start als Admin angelegt bzw. aktiviert werden |
+| `DISPLAY_TOKEN`          | Geheimer Schlüssel für den Wachen-Monitor ohne Login (`/monitor/<Schlüssel>`). Leer bedeutet nur für Admins. |
 | `MAGIC_LINK_TTL_MINUTES` | Gültigkeit eines Login-Links in Minuten (Standard: 15)  |
 | `SESSION_LIFETIME`       | Session-Dauer in Minuten (Standard: 90 Tage)            |
 | `LOG_CHANNEL`            | Im Docker-Image `stderr`, damit Fehler in den Container-Logs erscheinen |

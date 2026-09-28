@@ -40,6 +40,10 @@ class AdminPanelProvider extends PanelProvider
                     ->url(fn () => route('calendar'))
                     ->icon('heroicon-o-arrow-left')
                     ->sort(-100),
+                NavigationItem::make('Wachen-Monitor')
+                    ->url(fn () => route('monitor'), shouldOpenInNewTab: true)
+                    ->icon('heroicon-o-tv')
+                    ->sort(-99),
             ])
             ->userMenuItems([
                 MenuItem::make()
