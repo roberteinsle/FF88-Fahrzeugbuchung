@@ -8,6 +8,55 @@ import deLocale from '@fullcalendar/core/locales/de';
 
 let calendar = null;
 
+// Flat line icons (Lucide, ISC license); static markup, never user data
+const ICONS = {
+    car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+};
+
+function icon(name) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.classList.add('fc-ev-icon');
+    svg.innerHTML = ICONS[name];
+    return svg;
+}
+
+// Text goes in via textContent so booking data can't inject markup
+function el(tag, className, text) {
+    const node = document.createElement(tag);
+    node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+}
+
+function listContent(props) {
+    const row = el('div', 'fc-ev-list');
+    if (props.status === 'pending') row.append(el('span', 'fc-ev-pending', 'Angefragt'));
+    [['car', props.vehicleShort], ['target', props.purpose], ['users', props.userName]].forEach(([name, text]) => {
+        const item = el('span', 'fc-ev-item');
+        item.append(icon(name), el('span', '', text));
+        row.append(item);
+    });
+    return row;
+}
+
+function weekContent(props, compact) {
+    const box = el('div', compact ? 'fc-ev-week fc-ev-week-compact' : 'fc-ev-week');
+    box.append(el('div', 'fc-ev-vehicle', props.vehicleShort));
+    if (!compact) {
+        box.append(el('div', 'fc-ev-purpose', props.purpose), el('div', 'fc-ev-user', props.userName));
+    }
+    return box;
+}
+
 function buildEventsUrl(vehicleIds) {
     const base = document.getElementById('booking-calendar')?.dataset?.eventsUrl ?? '/bookings/events';
     const url = new URL(base, window.location.origin);
@@ -63,10 +112,20 @@ function initCalendar() {
 
         // Month view on mobile: show colored dots, no text
         eventContent: function(arg) {
-            if (arg.view.type === 'dayGridMonth' && isMobile) {
-                return {
-                    html: `<span class="fc-event-dot" style="background-color:${arg.event.backgroundColor}"></span>`,
-                };
+            const props = arg.event.extendedProps;
+
+            switch (arg.view.type) {
+                case 'listWeek':
+                    return { domNodes: [listContent(props)] };
+                case 'timeGridWeek':
+                    // Phones: vehicle name only, the columns are too narrow for more
+                    return { domNodes: [weekContent(props, isMobile)] };
+                case 'dayGridMonth':
+                    if (isMobile) {
+                        return {
+                            html: `<span class="fc-event-dot" style="background-color:${arg.event.backgroundColor}"></span>`,
+                        };
+                    }
             }
             return true; // default rendering
         },
