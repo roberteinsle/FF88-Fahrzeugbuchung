@@ -29,6 +29,7 @@ class VehicleSeeder extends Seeder
             [
                 'name' => 'JF-Anhänger',
                 'short_name' => 'JF-Anh',
+                'type' => 'trailer',
                 'color' => '#22c55e',
                 'description' => 'Anhänger Jugendfeuerwehr',
                 'is_active' => true,

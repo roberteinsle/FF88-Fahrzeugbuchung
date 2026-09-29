@@ -33,6 +33,12 @@ class VehicleResource extends Resource
                 ->maxLength(20)
                 ->helperText('z. B. „MTW-A" – wird im Kalender auf dem Handy angezeigt'),
 
+            Forms\Components\Select::make('type')
+                ->label('Typ')
+                ->options(['truck' => 'Fahrzeug (LKW/PKW)', 'trailer' => 'Anhänger'])
+                ->default('truck')
+                ->required(),
+
             Forms\Components\ColorPicker::make('color')
                 ->label('Farbe im Kalender')
                 ->required()

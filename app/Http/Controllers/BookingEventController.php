@@ -44,6 +44,7 @@ class BookingEventController extends Controller
                     'vehicleId' => $booking->vehicle_id,
                     'vehicleName' => $booking->vehicle->name,
                     'vehicleShort' => $booking->vehicle->displayName(),
+                    'vehicleType' => $booking->vehicle->type,
                     'userName' => $booking->user->name,
                     'purpose' => $booking->purpose,
                     'destination' => $booking->destination,

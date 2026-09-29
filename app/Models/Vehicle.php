@@ -14,6 +14,7 @@ class Vehicle extends \Illuminate\Database\Eloquent\Model
     protected $fillable = [
         'name',
         'short_name',
+        'type',
         'color',
         'description',
         'is_active',
