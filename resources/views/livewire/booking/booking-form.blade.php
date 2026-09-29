@@ -164,7 +164,7 @@
                         id="purpose"
                         type="text"
                         wire:model="purpose"
-                        placeholder="z. B. Jugendfeuerwehr Übung"
+                        placeholder="z. B. Lehrgang"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
                     />
                     @error('purpose') <p class="mt-1 text-sm text-fw-red">{{ $message }}</p> @enderror
@@ -177,7 +177,7 @@
                         id="destination"
                         type="text"
                         wire:model="destination"
-                        placeholder="z. B. Feuerwehrhaus Braak"
+                        placeholder="z. B. Nütschau"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-fw-navy focus:border-transparent"
                     />
                 </div>
